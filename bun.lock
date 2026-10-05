@@ -55,6 +55,9 @@
     },
     "packages/metrics": {
       "name": "@perps-risk/metrics",
+      "dependencies": {
+        "@perps-risk/types": "workspace:*",
+      },
     },
     "packages/risk": {
       "name": "@perps-risk/risk",
