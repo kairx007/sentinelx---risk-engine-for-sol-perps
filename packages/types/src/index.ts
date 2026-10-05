@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Venue identifiers are stable lowercase keys, independent of SDK names. */
-export const VenueSchema = z.enum(["drift", "phoenix", "jupiter"]);
+export const VenueSchema = z.enum(["drift", "velocity", "phoenix", "jupiter"]);
 export type Venue = z.infer<typeof VenueSchema>;
 
 const TimestampSchema = z.string().datetime({ offset: true });

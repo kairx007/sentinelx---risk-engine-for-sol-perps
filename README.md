@@ -4,7 +4,9 @@ An open-source risk intelligence system for Solana perpetual markets. The projec
 
 ## Project status
 
-Phase 1 establishes the repository and development tooling. Product logic and venue integrations have not been implemented yet. See [plan.md](./plan.md) for the phased roadmap.
+The collector currently exposes a read-only Velocity perp market adapter. See
+[Velocity Adapter](./docs/velocity-adapter.md) for setup and data coverage.
+The phased roadmap is in [plan.md](./plan.md).
 
 ## Requirements
 
@@ -28,11 +30,13 @@ Use `bun run lint` and `bun run format:check` to check code style. Copy `.env.ex
 - `tests/` — fixtures and integration tests
 - `docs/` — project documentation
 
-## Drift market data
+## Velocity market data
 
-Phase 3 adds the Drift SDK adapter. See [Drift Adapter](./docs/drift-adapter.md)
-for setup, data coverage, and known gaps. The adapter accepts an RPC URL and
-returns a validated canonical `MarketState`; it does not submit transactions.
+The Velocity adapter subscribes to current perp market and oracle accounts with
+the official SDK, then returns a validated canonical `MarketState`. It is
+read-only and does not submit transactions. Velocity is a separate program
+deployment from Drift with different account addresses and USDT-quoted mainnet
+markets; it is not a decoder replacement for Drift V2.
 
 ## License
 

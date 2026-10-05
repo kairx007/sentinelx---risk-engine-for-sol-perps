@@ -1,0 +1,11 @@
+{
+  "name": "@perps-risk/adapter-velocity",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@perps-risk/types": "workspace:*",
+    "@solana/web3.js": "1.99.0",
+    "@velocity-exchange/sdk": "0.26.0"
+  }
+}
