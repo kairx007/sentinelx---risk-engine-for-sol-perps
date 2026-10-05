@@ -1,0 +1,6 @@
+{
+  "name": "@perps-risk/adapter-phoenix",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts"
+}

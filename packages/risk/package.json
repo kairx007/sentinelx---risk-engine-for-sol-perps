@@ -1,0 +1,6 @@
+{
+  "name": "@perps-risk/risk",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts"
+}
