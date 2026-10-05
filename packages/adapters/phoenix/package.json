@@ -2,5 +2,8 @@
   "name": "@perps-risk/adapter-phoenix",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts"
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@ellipsis-labs/rise": "0.5.19"
+  }
 }

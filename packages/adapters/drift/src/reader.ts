@@ -2,7 +2,6 @@ import {
   calculateBidAskPrice,
   calculateReservePrice,
   DriftClient,
-  getMarketsAndOraclesForSubscription,
   initialize,
   Wallet,
 } from "@drift-labs/sdk";
@@ -68,15 +67,16 @@ export function createDriftMarketReader(
   // only subscribes to and reads accounts; it never invokes transaction methods.
   const wallet = new Wallet(Keypair.generate());
   const sdkConfig = initialize({ env });
-  const subscriptions = getMarketsAndOraclesForSubscription(env, [market], []);
   const client = new DriftClient({
     connection,
     wallet,
     env,
     programID: new PublicKey(sdkConfig.DRIFT_PROGRAM_ID),
-    perpMarketIndexes: subscriptions.perpMarketIndexes,
-    spotMarketIndexes: subscriptions.spotMarketIndexes,
-    oracleInfos: subscriptions.oracleInfos,
+    // Subscribe only to this perp and its oracle. The SDK helper treats an
+    // empty spot-market list as "all spot markets", which is unnecessary here.
+    perpMarketIndexes: [market.marketIndex],
+    spotMarketIndexes: [],
+    oracleInfos: [{ publicKey: market.oracle, source: market.oracleSource }],
     skipLoadUsers: true,
     accountSubscription: { type: "websocket", commitment },
   });

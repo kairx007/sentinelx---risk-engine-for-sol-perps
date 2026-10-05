@@ -5,7 +5,7 @@
   "exports": "./src/index.ts",
   "dependencies": {
     "@perps-risk/types": "workspace:*",
-    "@drift-labs/sdk": "2.163.0-beta.13",
+    "@drift-labs/sdk": "2.146.0-beta.12",
     "@solana/web3.js": "1.98.0"
   }
 }

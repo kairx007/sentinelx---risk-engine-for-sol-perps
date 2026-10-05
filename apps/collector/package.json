@@ -4,6 +4,8 @@
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@perps-risk/adapter-velocity": "workspace:*"
+    "@perps-risk/adapter-velocity": "workspace:*",
+    "@perps-risk/adapter-phoenix": "workspace:*",
+    "@perps-risk/adapter-jupiter": "workspace:*"
   }
 }

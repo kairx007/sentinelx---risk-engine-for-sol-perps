@@ -61,10 +61,10 @@ export class DriftAdapter {
       this.rpcUrl,
       this.commitment,
     );
-    let subscribed = false;
+    let subscriptionAttempted = false;
     try {
+      subscriptionAttempted = true;
       await reader.subscribe();
-      subscribed = true;
       const snapshot = await reader.readSnapshot(market);
 
       return normalizeDriftMarketSnapshot({
@@ -73,7 +73,7 @@ export class DriftAdapter {
         staleAfterMs: this.staleAfterMs,
       });
     } finally {
-      if (subscribed) await reader.unsubscribe();
+      if (subscriptionAttempted) await reader.unsubscribe();
     }
   }
 }
