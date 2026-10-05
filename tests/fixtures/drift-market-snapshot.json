@@ -1,0 +1,18 @@
+{
+  "marketSymbol": "SOL-PERP",
+  "marketIndex": 0,
+  "baseAssetSymbol": "SOL",
+  "oracleAddress": "3m6i4RFWEDw2Ft4tFHPJtYgmpPe21k56M3FHeWYrgGBz",
+  "oraclePriceRaw": "152380000",
+  "oracleSlot": "350000000",
+  "markPriceRaw": "152410000",
+  "bidPriceRaw": "152400000",
+  "askPriceRaw": "152430000",
+  "longOpenInterestRaw": "125000000000",
+  "shortOpenInterestRaw": "-118000000000",
+  "fundingRateRaw": "100000",
+  "fundingPeriodSeconds": "3600",
+  "lastFundingRateTimestampSeconds": "1791194400",
+  "sourceUpdatedAt": "2026-10-05T10:00:00.000Z",
+  "collectedAt": "2026-10-05T10:00:01.000Z"
+}

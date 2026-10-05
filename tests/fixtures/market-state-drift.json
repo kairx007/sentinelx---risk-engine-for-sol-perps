@@ -1,0 +1,56 @@
+{
+  "market": {
+    "venue": "drift",
+    "symbol": "SOL-PERP",
+    "marketId": "SOL-PERP",
+    "baseAsset": "SOL",
+    "quoteAsset": "USD"
+  },
+  "price": {
+    "lastPrice": 152.42,
+    "indexPrice": 152.38,
+    "markPrice": 152.41,
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "positioning": {
+    "longOpenInterest": 125000,
+    "shortOpenInterest": 118000,
+    "totalOpenInterest": 243000,
+    "openInterestUnit": "base",
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "liquidity": {
+    "bestBidPrice": 152.4,
+    "bestAskPrice": 152.43,
+    "bidSize": 8250,
+    "askSize": 7900,
+    "availableLiquidity": 16150,
+    "liquidityUnit": "base",
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "funding": {
+    "rate": 0.0001,
+    "periodSeconds": 3600,
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "liquidation": {
+    "longVolume": 1200,
+    "shortVolume": 700,
+    "totalVolume": 1900,
+    "volumeUnit": "quote",
+    "intervalSeconds": 3600,
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "oracle": {
+    "price": 152.38,
+    "source": "drift-oracle",
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "metadata": {
+    "source": "drift-adapter",
+    "observedAt": "2026-10-05T10:00:00Z",
+    "collectedAt": "2026-10-05T10:00:01Z",
+    "sourceUpdatedAt": "2026-10-05T10:00:00Z",
+    "freshness": { "sourceAgeMs": 1000, "staleAfterMs": 30000 }
+  }
+}

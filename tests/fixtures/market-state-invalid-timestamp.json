@@ -1,0 +1,48 @@
+{
+  "market": {
+    "venue": "drift",
+    "symbol": "SOL-PERP",
+    "marketId": "SOL-PERP",
+    "baseAsset": "SOL",
+    "quoteAsset": "USD"
+  },
+  "price": {
+    "lastPrice": 152.42,
+    "indexPrice": 152.38,
+    "markPrice": 152.41,
+    "observedAt": "not-a-timestamp"
+  },
+  "positioning": {
+    "longOpenInterest": null,
+    "shortOpenInterest": null,
+    "totalOpenInterest": null,
+    "openInterestUnit": null,
+    "observedAt": null
+  },
+  "liquidity": {
+    "bestBidPrice": null,
+    "bestAskPrice": null,
+    "bidSize": null,
+    "askSize": null,
+    "availableLiquidity": null,
+    "liquidityUnit": null,
+    "observedAt": null
+  },
+  "funding": { "rate": null, "periodSeconds": null, "observedAt": null },
+  "liquidation": {
+    "longVolume": null,
+    "shortVolume": null,
+    "totalVolume": null,
+    "volumeUnit": null,
+    "intervalSeconds": null,
+    "observedAt": null
+  },
+  "oracle": { "price": null, "source": null, "observedAt": null },
+  "metadata": {
+    "source": "drift-adapter",
+    "observedAt": null,
+    "collectedAt": "2026-10-05T10:00:01Z",
+    "sourceUpdatedAt": null,
+    "freshness": { "sourceAgeMs": null, "staleAfterMs": null }
+  }
+}

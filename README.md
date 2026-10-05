@@ -28,6 +28,12 @@ Use `bun run lint` and `bun run format:check` to check code style. Copy `.env.ex
 - `tests/` — fixtures and integration tests
 - `docs/` — project documentation
 
+## Drift market data
+
+Phase 3 adds the Drift SDK adapter. See [Drift Adapter](./docs/drift-adapter.md)
+for setup, data coverage, and known gaps. The adapter accepts an RPC URL and
+returns a validated canonical `MarketState`; it does not submit transactions.
+
 ## License
 
 MIT. See [LICENSE](./LICENSE).

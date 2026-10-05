@@ -1,0 +1,56 @@
+{
+  "market": {
+    "venue": "phoenix",
+    "symbol": "SOL-PERP",
+    "marketId": null,
+    "baseAsset": "SOL",
+    "quoteAsset": "USD"
+  },
+  "price": {
+    "lastPrice": 152.38,
+    "indexPrice": null,
+    "markPrice": null,
+    "observedAt": "2026-10-05T10:00:00+00:00"
+  },
+  "positioning": {
+    "longOpenInterest": null,
+    "shortOpenInterest": null,
+    "totalOpenInterest": null,
+    "openInterestUnit": null,
+    "observedAt": null
+  },
+  "liquidity": {
+    "bestBidPrice": 152.36,
+    "bestAskPrice": 152.4,
+    "bidSize": 2400,
+    "askSize": 2100,
+    "availableLiquidity": null,
+    "liquidityUnit": "base",
+    "observedAt": "2026-10-05T10:00:00Z"
+  },
+  "funding": {
+    "rate": null,
+    "periodSeconds": null,
+    "observedAt": null
+  },
+  "liquidation": {
+    "longVolume": null,
+    "shortVolume": null,
+    "totalVolume": null,
+    "volumeUnit": null,
+    "intervalSeconds": null,
+    "observedAt": null
+  },
+  "oracle": {
+    "price": null,
+    "source": null,
+    "observedAt": null
+  },
+  "metadata": {
+    "source": "phoenix-market-feed",
+    "observedAt": "2026-10-05T10:00:00Z",
+    "collectedAt": "2026-10-05T10:00:00.500Z",
+    "sourceUpdatedAt": null,
+    "freshness": { "sourceAgeMs": null, "staleAfterMs": 30000 }
+  }
+}
