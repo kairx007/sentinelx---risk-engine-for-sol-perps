@@ -17,6 +17,9 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@perps-risk/cross-venue": "workspace:*",
+    "@perps-risk/metrics": "workspace:*",
+    "@perps-risk/risk": "workspace:*",
     "@perps-risk/types": "workspace:*",
     "@eslint/js": "^9.0.0",
     "eslint": "^9.0.0",

@@ -6,6 +6,9 @@
       "name": "risk-engine",
       "devDependencies": {
         "@eslint/js": "^9.0.0",
+        "@perps-risk/cross-venue": "workspace:*",
+        "@perps-risk/metrics": "workspace:*",
+        "@perps-risk/risk": "workspace:*",
         "@perps-risk/types": "workspace:*",
         "eslint": "^9.0.0",
         "prettier": "^3.0.0",
@@ -53,6 +56,18 @@
         "@velocity-exchange/sdk": "0.26.0",
       },
     },
+    "packages/cross-venue": {
+      "name": "@perps-risk/cross-venue",
+      "version": "0.1.0",
+      "dependencies": {
+        "@perps-risk/metrics": "workspace:*",
+        "@perps-risk/risk": "workspace:*",
+        "@perps-risk/types": "workspace:*",
+      },
+      "devDependencies": {
+        "vitest": "^3.2.0",
+      },
+    },
     "packages/metrics": {
       "name": "@perps-risk/metrics",
       "dependencies": {
@@ -61,6 +76,10 @@
     },
     "packages/risk": {
       "name": "@perps-risk/risk",
+      "dependencies": {
+        "@perps-risk/metrics": "workspace:*",
+        "@perps-risk/types": "workspace:*",
+      },
     },
     "packages/types": {
       "name": "@perps-risk/types",
@@ -217,6 +236,8 @@
     "@perps-risk/api": ["@perps-risk/api@workspace:apps/api"],
 
     "@perps-risk/collector": ["@perps-risk/collector@workspace:apps/collector"],
+
+    "@perps-risk/cross-venue": ["@perps-risk/cross-venue@workspace:packages/cross-venue"],
 
     "@perps-risk/dashboard": ["@perps-risk/dashboard@workspace:apps/dashboard"],
 

@@ -81,10 +81,18 @@ export function normalizeVelocityMarketSnapshot(
       observedAt: sourceUpdatedAt,
     },
     funding: {
-      rate: numberOrNull(
-        snapshot.marketAccount.lastFundingRate,
-        FUNDING_RATE_PRECISION,
-      ),
+      rate: (() => {
+        const rawRate = numberOrNull(
+          snapshot.marketAccount.lastFundingRate,
+          FUNDING_RATE_PRECISION,
+        );
+        // lastFundingRate is quote-per-base (USDT per SOL/BTC/etc), not a
+        // percentage.  Divide by the mark price to get a true rate.
+        if (rawRate === null || rawRate === 0) return null;
+        const mark = numberOrNull(snapshot.markPrice, PRICE_PRECISION);
+        if (mark === null || mark <= 0) return null;
+        return rawRate / mark;
+      })(),
       periodSeconds: (() => {
         const period = safeInteger(
           snapshot.marketAccount.marketStats.fundingPeriod,
