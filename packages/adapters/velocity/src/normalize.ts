@@ -77,7 +77,7 @@ export function normalizeVelocityMarketSnapshot(
       bidSize: null,
       askSize: null,
       availableLiquidity: null,
-      liquidityUnit: null,
+      liquidityUnit: "base",
       observedAt: sourceUpdatedAt,
     },
     funding: {
@@ -128,10 +128,10 @@ export function normalizeVelocityMarketSnapshot(
           sourceUpdatedAt === null
             ? null
             : Math.max(
-                0,
-                snapshot.collectedAt.getTime() -
-                  new Date(sourceUpdatedAt).getTime(),
-              ),
+              0,
+              snapshot.collectedAt.getTime() -
+              new Date(sourceUpdatedAt).getTime(),
+            ),
         staleAfterMs: snapshot.staleAfterMs,
       },
     },

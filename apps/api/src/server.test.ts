@@ -178,6 +178,17 @@ describe("API", () => {
     expect(phoenixGet).not.toHaveBeenCalled();
   });
 
+  it("returns one valid canonical state for the Phoenix query endpoint", async () => {
+    const response = await fetch(`${baseUrl}/markets?venue=phoenix&symbol=SOL-PERP`);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveLength(1);
+    expect(MarketStateSchema.safeParse(body[0]).success).toBe(true);
+    expect(body).toEqual([phoenixState]);
+    expect(phoenixGet).toHaveBeenCalledWith("SOL-PERP");
+    expect(velocityGet).not.toHaveBeenCalled();
+  });
+
   it("returns a canonical state for the path market endpoint", async () => {
     const response = await fetch(`${baseUrl}/markets/phoenix/SOL-PERP`);
     expect(response.status).toBe(200);

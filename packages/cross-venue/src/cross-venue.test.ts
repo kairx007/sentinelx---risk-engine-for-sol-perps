@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CrossVenueRisk, VenueSnapshot } from "./types.js";
-import { calculateCrossVenueRisk } from "./risk.js";
+import type { CrossVenueRisk, EcosystemRisk, VenueSnapshot } from "./types.js";
+import { calculateCrossVenueRisk, calculateEcosystemRisk } from "./risk.js";
 
 function venue(
   venue: VenueSnapshot["venue"],
@@ -175,5 +175,42 @@ describe("calculateCrossVenueRisk", () => {
     ]);
     expect(result.timestamp).toBeTruthy();
     expect(new Date(result.timestamp).getTime()).toBeGreaterThan(0);
+  });
+
+  it("returns a stable ecosystem summary with a 2-venue Phoenix/Velocity mix", () => {
+    const snapshots = [
+      venue("velocity", 120.0, 12_000, 8, 86400, 0.02),
+      venue("phoenix", 121.2, 11_500, 9, 86400, 0.025),
+    ];
+
+    const result = calculateEcosystemRisk("SOL", snapshots);
+
+    expect(result.asset).toBe("SOL");
+    expect(result.venueCount).toBe(2);
+    expect(result.ecosystemLevel).toMatch(/^(low|medium|high|critical)$/);
+    expect(result.riskDrivers.length).toBeGreaterThan(0);
+    expect(result.venueSnapshots.map((entry) => entry.venue).sort()).toEqual([
+      "phoenix",
+      "velocity",
+    ]);
+  });
+
+  it("handles a 4-venue Phoenix/Velocity stress mix deterministically", () => {
+    const snapshots = [
+      venue("velocity", 120.0, 50_000, 8, 3600, 0.01),
+      venue("phoenix", 130.0, 18_000, 25, 3600, 0.5),
+      venue("velocity", 122.0, 45_000, 12, 3600, 0.08),
+      venue("phoenix", 135.0, 17_500, 35, 3600, 0.7),
+    ];
+
+    const result = calculateEcosystemRisk("SOL", snapshots);
+
+    expect(result.venueCount).toBe(4);
+    expect(result.divergence.price).not.toBeNull();
+    expect(result.divergence.funding).not.toBeNull();
+    expect(result.ecosystemLevel).toMatch(/^(medium|high|critical)$/);
+    expect(result.riskDrivers.length).toBeGreaterThanOrEqual(2);
+    const typed: EcosystemRisk = result;
+    expect(typed.ecosystemScore).not.toBeNull();
   });
 });

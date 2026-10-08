@@ -1,4 +1,4 @@
-import type { CrossVenueRisk, VenueSnapshot } from "./types.js";
+import type { CrossVenueRisk, EcosystemRisk, VenueSnapshot } from "./types.js";
 import type { MarketState } from "@perps-risk/types";
 import type { MarketRisk } from "@perps-risk/risk";
 import { evaluateMarketRisk } from "@perps-risk/risk";
@@ -11,8 +11,19 @@ import {
   calculateOpenInterestMetrics,
   calculateVolatilityMetrics,
 } from "@perps-risk/metrics";
-import { calculateCrossVenueRisk } from "./risk.js";
+import { calculateCrossVenueRisk, calculateEcosystemRisk } from "./risk.js";
 import { assetKey } from "./normalize.js";
+export { assetKey } from "./normalize.js";
+export { calculateCrossVenueRisk, calculateEcosystemRisk } from "./risk.js";
+export { calculateContagionRisk } from "./contagion.js";
+export type {
+  CrossVenueRisk,
+  EcosystemRisk,
+  VenueSnapshot,
+  ContagionRisk,
+  ContagionStatus,
+  ContagionSeverity,
+} from "./types.js";
 
 /**
  * Runs the full risk pipeline on a raw `MarketState` and returns a

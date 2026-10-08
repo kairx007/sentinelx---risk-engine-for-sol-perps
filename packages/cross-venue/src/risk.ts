@@ -144,3 +144,11 @@ export function calculateCrossVenueRisk(
     riskDrivers,
   };
 }
+
+/** Alias for the public ecosystem risk result used across venue comparisons. */
+export function calculateEcosystemRisk(
+  asset: string,
+  snapshots: VenueSnapshot[],
+): CrossVenueRisk {
+  return calculateCrossVenueRisk(asset, snapshots);
+}

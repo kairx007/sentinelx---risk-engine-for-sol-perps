@@ -45,3 +45,17 @@ export interface CrossVenueRisk {
   divergence: CrossVenueDivergence;
   riskDrivers: string[];
 }
+
+export type ContagionStatus = "NONE" | "ISOLATED" | "DEVELOPING" | "ACTIVE";
+export type ContagionSeverity = "low" | "medium" | "high" | "critical";
+
+export interface ContagionRisk {
+  status: ContagionStatus;
+  severity: ContagionSeverity;
+  affectedVenues: import("@perps-risk/types").Venue[];
+  drivers: string[];
+  timestamp: string;
+}
+
+/** Public ecosystem-level alias for the cross-venue result. */
+export type EcosystemRisk = CrossVenueRisk;
