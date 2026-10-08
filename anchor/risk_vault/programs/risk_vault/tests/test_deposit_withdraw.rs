@@ -1,7 +1,8 @@
 use anchor_lang::{
-    prelude::Pubkey,
+    prelude::{Clock, Pubkey},
     solana_program::{
         instruction::Instruction, program_option::COption, program_pack::Pack, system_program,
+        sysvar::SysvarId,
     },
     AccountDeserialize, AccountSerialize, InstructionData, ToAccountMetas,
 };
@@ -39,6 +40,14 @@ fn vault_pda(collateral_mint: &Pubkey) -> (Pubkey, u8) {
 
 fn vault_ata(vault: &Pubkey, collateral_mint: &Pubkey) -> Pubkey {
     anchor_spl::associated_token::get_associated_token_address(vault, collateral_mint)
+}
+
+fn risk_state_pda(vault: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[risk_vault::constants::RISK_STATE_SEED, vault.as_ref()],
+        &risk_vault::id(),
+    )
+    .0
 }
 
 fn user_vault_pda(vault: &Pubkey, owner: &Pubkey) -> (Pubkey, u8) {
@@ -123,6 +132,7 @@ fn initialize_vault_instruction(
             authority: initializer,
             collateral_mint,
             vault,
+            risk_state: risk_state_pda(&vault),
             vault_token_account,
             token_program: TOKEN_PROGRAM_ID,
             associated_token_program: anchor_spl::associated_token::ID,
@@ -190,6 +200,36 @@ fn withdraw_instruction(
     )
 }
 
+fn risk_update_instruction(
+    fixture: &Fixture,
+    risk_level: risk_vault::state::RiskLevel,
+    risk_score: u8,
+    contagion_state: risk_vault::state::ContagionState,
+    max_leverage_x100: u16,
+    observed_at: i64,
+    nonce: u64,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::UpdateRiskState {
+            risk_level,
+            risk_score,
+            contagion_state,
+            max_leverage_x100,
+            observed_at,
+            nonce,
+        }
+        .data(),
+        risk_vault::accounts::UpdateRiskState {
+            risk_authority: fixture.risk_authority.pubkey(),
+            vault: fixture.vault,
+            risk_state: risk_state_pda(&fixture.vault),
+            clock: Clock::id(),
+        }
+        .to_account_metas(None),
+    )
+}
+
 fn send_deposit(fixture: &mut Fixture, user: &User, amount: u64) -> bool {
     let instruction = deposit_instruction(user.keypair.pubkey(), user, fixture, amount);
     send(&mut fixture.svm, &user.keypair, instruction)
@@ -230,6 +270,8 @@ fn setup() -> Fixture {
     )
     .unwrap();
     svm.airdrop(&initializer.pubkey(), 2_000_000_000).unwrap();
+    svm.airdrop(&risk_authority.pubkey(), 1_000_000_000)
+        .unwrap();
     svm.set_account(
         collateral_mint,
         Account {
@@ -695,4 +737,52 @@ fn unsolicited_collateral_is_surplus_and_not_counted_as_user_deposits() {
         token_balance(&fixture.svm, &fixture.vault_token_account),
         125
     );
+}
+
+#[test]
+fn critical_risk_update_does_not_change_shares_or_disable_withdrawals() {
+    let mut fixture = setup();
+    let user = create_user(&mut fixture, 1_000);
+    assert!(send_deposit(&mut fixture, &user, 250));
+
+    let vault_before = vault_state(&fixture);
+    let user_before = user_state(&fixture, &user);
+    let user_tokens_before = token_balance(&fixture.svm, &user.token_account);
+    let vault_tokens_before = token_balance(&fixture.svm, &fixture.vault_token_account);
+    let clock = fixture.svm.get_sysvar::<Clock>();
+    fixture.svm.set_sysvar(&clock);
+    let update = risk_update_instruction(
+        &fixture,
+        risk_vault::state::RiskLevel::Critical,
+        90,
+        risk_vault::state::ContagionState::Active,
+        0,
+        clock.unix_timestamp,
+        1,
+    );
+    assert!(send(&mut fixture.svm, &fixture.risk_authority, update));
+
+    let vault_after = vault_state(&fixture);
+    let user_after = user_state(&fixture, &user);
+    assert_eq!(vault_after.total_deposits, vault_before.total_deposits);
+    assert_eq!(vault_after.total_shares, vault_before.total_shares);
+    assert_eq!(user_after.shares, user_before.shares);
+    assert_eq!(
+        token_balance(&fixture.svm, &user.token_account),
+        user_tokens_before
+    );
+    assert_eq!(
+        token_balance(&fixture.svm, &fixture.vault_token_account),
+        vault_tokens_before
+    );
+
+    assert!(send_withdraw(
+        &mut fixture,
+        &user.keypair,
+        user.keypair.pubkey(),
+        user.user_vault_account,
+        user.token_account,
+        250,
+    ));
+    assert_eq!(vault_state(&fixture).total_deposits, 0);
 }

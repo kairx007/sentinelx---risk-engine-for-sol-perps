@@ -4,7 +4,10 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::{constants::VAULT_SEED, state::Vault};
+use crate::{
+    constants::{RISK_STATE_SEED, VAULT_SEED},
+    state::{ContagionState, RiskLevel, RiskState, Vault},
+};
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
@@ -19,6 +22,14 @@ pub struct InitializeVault<'info> {
         bump
     )]
     pub vault: Account<'info, Vault>,
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + RiskState::INIT_SPACE,
+        seeds = [RISK_STATE_SEED, vault.key().as_ref()],
+        bump
+    )]
+    pub risk_state: Account<'info, RiskState>,
     #[account(
         init,
         payer = authority,
@@ -43,6 +54,16 @@ pub fn handle_initialize_vault(
     vault.total_deposits = 0;
     vault.total_shares = 0;
     vault.bump = ctx.bumps.vault;
+
+    let risk_state = &mut ctx.accounts.risk_state;
+    risk_state.risk_level = RiskLevel::Critical;
+    risk_state.risk_score = 100;
+    risk_state.contagion_state = ContagionState::Active;
+    risk_state.max_leverage_x100 = 0;
+    risk_state.observed_at = 0;
+    risk_state.updated_at = 0;
+    risk_state.nonce = 0;
+    risk_state.bump = ctx.bumps.risk_state;
 
     emit!(VaultInitialized {
         vault: vault.key(),

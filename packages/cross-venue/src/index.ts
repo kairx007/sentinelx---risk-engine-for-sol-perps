@@ -16,6 +16,7 @@ import { assetKey } from "./normalize.js";
 export { assetKey } from "./normalize.js";
 export { calculateCrossVenueRisk, calculateEcosystemRisk } from "./risk.js";
 export { calculateContagionRisk } from "./contagion.js";
+export { buildRiskPolicyDecision, type RiskPolicyDecision } from "./policy.js";
 export type {
   CrossVenueRisk,
   EcosystemRisk,

@@ -34,4 +34,34 @@ pub mod risk_vault {
     pub fn withdraw(ctx: Context<WithdrawAccounts>, shares: u64) -> Result<()> {
         crate::instructions::withdraw::handle_withdraw(ctx, shares)
     }
+
+    pub fn update_risk_state(
+        ctx: Context<UpdateRiskState>,
+        risk_level: RiskLevel,
+        risk_score: u8,
+        contagion_state: ContagionState,
+        max_leverage_x100: u16,
+        observed_at: i64,
+        nonce: u64,
+    ) -> Result<()> {
+        crate::instructions::update_risk_state::handle_update_risk_state(
+            ctx,
+            risk_level,
+            risk_score,
+            contagion_state,
+            max_leverage_x100,
+            observed_at,
+            nonce,
+        )
+    }
+
+    pub fn rotate_risk_authority(
+        ctx: Context<RotateRiskAuthority>,
+        new_risk_authority: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::rotate_risk_authority::handle_rotate_risk_authority(
+            ctx,
+            new_risk_authority,
+        )
+    }
 }

@@ -20,4 +20,26 @@ pub enum VaultError {
     WithdrawalTooSmall,
     #[msg("Withdrawal exceeds the user's share balance")]
     InsufficientUserShares,
+    #[msg("Signer is not the configured risk authority")]
+    UnauthorizedRiskAuthority,
+    #[msg("Signer is not the Vault authority")]
+    UnauthorizedVaultAuthority,
+    #[msg("Risk score must be between zero and one hundred")]
+    InvalidRiskScore,
+    #[msg("Risk level does not match the supplied score")]
+    RiskLevelScoreMismatch,
+    #[msg("Risk policy exceeds the on-chain leverage cap")]
+    InvalidRiskPolicy,
+    #[msg("Risk update nonce is not the exact next sequence")]
+    InvalidNonce,
+    #[msg("Risk update nonce has been exhausted")]
+    NonceExhausted,
+    #[msg("Risk update is older than the allowed age")]
+    StaleRiskUpdate,
+    #[msg("Risk update timestamp is too far in the future")]
+    FutureRiskTimestamp,
+    #[msg("Risk update timestamp is invalid")]
+    InvalidRiskTimestamp,
+    #[msg("Risk authority cannot be the default public key")]
+    InvalidRiskAuthority,
 }

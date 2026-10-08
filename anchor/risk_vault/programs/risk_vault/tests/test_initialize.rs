@@ -63,6 +63,14 @@ fn vault_ata(vault: &Pubkey, collateral_mint: &Pubkey) -> Pubkey {
     anchor_spl::associated_token::get_associated_token_address(vault, collateral_mint)
 }
 
+fn risk_state_pda(vault: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[risk_vault::constants::RISK_STATE_SEED, vault.as_ref()],
+        &risk_vault::id(),
+    )
+    .0
+}
+
 fn initialize_instruction(
     authority: Pubkey,
     risk_authority: Pubkey,
@@ -76,6 +84,7 @@ fn initialize_instruction(
             authority,
             collateral_mint,
             vault,
+            risk_state: risk_state_pda(&vault),
             vault_token_account: vault_ata(&vault, &collateral_mint),
             token_program: TOKEN_PROGRAM_ID,
             associated_token_program: anchor_spl::associated_token::ID,
@@ -112,6 +121,23 @@ fn initializes_vault_state() {
     assert_eq!(state.total_deposits, 0);
     assert_eq!(state.total_shares, 0);
     assert_eq!(state.bump, expected_bump);
+
+    let risk_state_account = svm.get_account(&risk_state_pda(&vault)).unwrap();
+    let mut risk_state_data: &[u8] = &risk_state_account.data;
+    let risk_state = risk_vault::state::RiskState::try_deserialize(&mut risk_state_data).unwrap();
+    assert_eq!(
+        risk_state.risk_level,
+        risk_vault::state::RiskLevel::Critical
+    );
+    assert_eq!(risk_state.risk_score, 100);
+    assert_eq!(
+        risk_state.contagion_state,
+        risk_vault::state::ContagionState::Active
+    );
+    assert_eq!(risk_state.max_leverage_x100, 0);
+    assert_eq!(risk_state.observed_at, 0);
+    assert_eq!(risk_state.updated_at, 0);
+    assert_eq!(risk_state.nonce, 0);
 
     let vault_ata = svm
         .get_account(&vault_ata(&vault, &collateral_mint))
