@@ -1,6 +1,0 @@
-{
-  "name": "@perps-risk/dashboard",
-  "private": true,
-  "type": "module",
-  "exports": "./src/index.ts"
-}

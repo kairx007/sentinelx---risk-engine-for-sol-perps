@@ -2,11 +2,11 @@ use anchor_lang::prelude::*;
 
 use crate::{
     constants::{
-        ACTIVE_MAX_LEVERAGE_X100, CRITICAL_MAX_LEVERAGE_X100, DEVELOPING_MAX_LEVERAGE_X100,
-        HIGH_MAX_LEVERAGE_X100, LOW_MAX_LEVERAGE_X100, MAX_FUTURE_SKEW_SECONDS, MAX_RISK_SCORE,
-        MAX_RISK_STATE_AGE_SECONDS, MEDIUM_MAX_LEVERAGE_X100, RISK_STATE_SEED, VAULT_SEED,
+        MAX_FUTURE_SKEW_SECONDS, MAX_RISK_SCORE, MAX_RISK_STATE_AGE_SECONDS, RISK_STATE_SEED,
+        VAULT_SEED,
     },
     errors::VaultError,
+    policy::effective_policy_cap,
     state::{ContagionState, RiskLevel, RiskState, Vault},
 };
 
@@ -34,21 +34,6 @@ fn score_matches_level(risk_level: RiskLevel, risk_score: u8) -> bool {
     }
 }
 
-fn leverage_cap(risk_level: RiskLevel, contagion_state: ContagionState) -> u16 {
-    let level_cap = match risk_level {
-        RiskLevel::Low => LOW_MAX_LEVERAGE_X100,
-        RiskLevel::Medium => MEDIUM_MAX_LEVERAGE_X100,
-        RiskLevel::High => HIGH_MAX_LEVERAGE_X100,
-        RiskLevel::Critical => CRITICAL_MAX_LEVERAGE_X100,
-    };
-    let contagion_cap = match contagion_state {
-        ContagionState::None | ContagionState::Isolated => u16::MAX,
-        ContagionState::Developing => DEVELOPING_MAX_LEVERAGE_X100,
-        ContagionState::Active => ACTIVE_MAX_LEVERAGE_X100,
-    };
-    level_cap.min(contagion_cap)
-}
-
 pub fn handle_update_risk_state(
     ctx: Context<UpdateRiskState>,
     risk_level: RiskLevel,
@@ -64,7 +49,7 @@ pub fn handle_update_risk_state(
         VaultError::RiskLevelScoreMismatch
     );
     require!(
-        max_leverage_x100 <= leverage_cap(risk_level, contagion_state),
+        max_leverage_x100 <= effective_policy_cap(risk_level, contagion_state),
         VaultError::InvalidRiskPolicy
     );
     require!(observed_at >= 0, VaultError::InvalidRiskTimestamp);

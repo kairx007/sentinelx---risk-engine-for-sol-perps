@@ -42,4 +42,14 @@ pub enum VaultError {
     InvalidRiskTimestamp,
     #[msg("Risk authority cannot be the default public key")]
     InvalidRiskAuthority,
+    #[msg("Risk state has not been initialized")]
+    RiskStateNotInitialized,
+    #[msg("Risk state is stale and blocks new exposure")]
+    RiskStateStale,
+    #[msg("Action would increase exposure beyond the configured policy")]
+    ExposureIncreaseBlocked,
+    #[msg("Requested leverage exceeds the effective risk cap")]
+    LeverageLimitExceeded,
+    #[msg("Risk policy is in reduction-only mode")]
+    ReductionOnlyMode,
 }

@@ -2,6 +2,7 @@ pub mod constants;
 pub mod errors;
 pub mod instructions;
 pub mod math;
+pub mod policy;
 pub mod state;
 
 use anchor_lang::prelude::*;
@@ -9,6 +10,7 @@ use anchor_lang::prelude::*;
 pub use constants::*;
 pub use errors::*;
 pub use instructions::*;
+pub use policy::*;
 pub use state::*;
 
 declare_id!("33fMx1DC1XXdSYXG8VUFqH5y1gDqxmEpbTTwESx21Rtq");
