@@ -2,5 +2,19 @@
   "name": "@perps-risk/api",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts"
+  "exports": "./src/app.ts",
+  "scripts": {
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "@perps-risk/adapter-phoenix": "workspace:*",
+    "@perps-risk/adapter-velocity": "workspace:*",
+    "@perps-risk/cross-venue": "workspace:*",
+    "@perps-risk/risk": "workspace:*",
+    "@perps-risk/types": "workspace:*",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  }
 }
