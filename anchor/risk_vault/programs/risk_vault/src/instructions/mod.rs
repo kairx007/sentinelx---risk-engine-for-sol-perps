@@ -1,13 +1,19 @@
+pub mod close_position;
 pub mod deposit;
+pub mod increase_position;
 pub mod initialize;
 pub mod initialize_user_vault_account;
+pub mod reduce_position;
 pub mod rotate_risk_authority;
 pub mod update_risk_state;
 pub mod withdraw;
 
+pub use close_position::*;
 pub use deposit::*;
+pub use increase_position::*;
 pub use initialize::*;
 pub use initialize_user_vault_account::*;
+pub use reduce_position::*;
 pub use rotate_risk_authority::*;
 pub use update_risk_state::*;
 pub use withdraw::*;

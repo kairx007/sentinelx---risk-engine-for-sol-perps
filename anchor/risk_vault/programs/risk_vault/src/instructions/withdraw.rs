@@ -60,6 +60,26 @@ pub fn handle_withdraw(ctx: Context<WithdrawAccounts>, shares: u64) -> Result<()
     );
 
     let amount = collateral_for_withdrawal(shares, vault.total_deposits, vault.total_shares)?;
+    require!(
+        ctx.accounts.user_vault_account.locked_collateral
+            <= collateral_for_withdrawal(
+                ctx.accounts.user_vault_account.shares,
+                vault.total_deposits,
+                vault.total_shares,
+            )?,
+        VaultError::InconsistentAccounting
+    );
+    let free_collateral = collateral_for_withdrawal(
+        ctx.accounts.user_vault_account.shares,
+        vault.total_deposits,
+        vault.total_shares,
+    )?
+    .checked_sub(ctx.accounts.user_vault_account.locked_collateral)
+    .ok_or(VaultError::InconsistentAccounting)?;
+    require!(
+        amount <= free_collateral,
+        VaultError::InsufficientFreeCollateral
+    );
     let total_deposits = vault
         .total_deposits
         .checked_sub(amount)

@@ -1,6 +1,7 @@
 pub const VAULT_SEED: &[u8] = b"vault";
 pub const USER_VAULT_SEED: &[u8] = b"user_vault";
 pub const RISK_STATE_SEED: &[u8] = b"risk_state";
+pub const POSITION_SEED: &[u8] = b"position";
 
 pub const MAX_RISK_SCORE: u8 = 100;
 pub const MAX_RISK_STATE_AGE_SECONDS: i64 = 300;

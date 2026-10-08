@@ -52,4 +52,24 @@ pub enum VaultError {
     LeverageLimitExceeded,
     #[msg("Risk policy is in reduction-only mode")]
     ReductionOnlyMode,
+    #[msg("Position market is invalid")]
+    InvalidMarket,
+    #[msg("Position is invalid")]
+    InvalidPosition,
+    #[msg("Position is not open")]
+    PositionNotOpen,
+    #[msg("Position is already closed")]
+    PositionAlreadyClosed,
+    #[msg("Position reduction is invalid")]
+    InvalidReduction,
+    #[msg("Insufficient free collateral")]
+    InsufficientFreeCollateral,
+    #[msg("Position collateral cannot be zero")]
+    ZeroCollateral,
+    #[msg("Position side does not match the existing position")]
+    PositionSideMismatch,
+    #[msg("Position price or notional is invalid")]
+    InvalidPrice,
+    #[msg("Collateral release is too small")]
+    CollateralReleaseTooSmall,
 }

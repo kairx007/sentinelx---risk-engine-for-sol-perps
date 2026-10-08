@@ -17,6 +17,34 @@ pub struct UserVaultAccount {
     pub owner: Pubkey,
     pub vault: Pubkey,
     pub shares: u64,
+    pub locked_collateral: u64,
+    pub bump: u8,
+}
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
+pub enum PositionSide {
+    Long,
+    Short,
+}
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
+pub enum PositionStatus {
+    Open,
+    Closed,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Position {
+    pub owner: Pubkey,
+    pub vault: Pubkey,
+    pub market: Pubkey,
+    pub side: PositionSide,
+    pub size: u64,
+    pub notional: u64,
+    pub collateral_locked: u64,
+    pub opened_at: i64,
+    pub status: PositionStatus,
     pub bump: u8,
 }
 

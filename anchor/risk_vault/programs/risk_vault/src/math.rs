@@ -64,3 +64,31 @@ pub fn collateral_for_withdrawal(
     require!(amount > 0, VaultError::WithdrawalTooSmall);
     Ok(amount)
 }
+
+pub fn leverage_x100(notional: u64, collateral: u64) -> Result<u16> {
+    require!(notional > 0, VaultError::InvalidPrice);
+    require!(collateral > 0, VaultError::ZeroCollateral);
+    let leverage = (notional as u128)
+        .checked_mul(100)
+        .ok_or(VaultError::ArithmeticOverflow)?
+        .checked_div(collateral as u128)
+        .ok_or(VaultError::ZeroCollateral)?;
+    u16::try_from(leverage).map_err(|_| error!(VaultError::ConversionOverflow))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn leverage_uses_fixed_point_rounding() {
+        assert_eq!(leverage_x100(300, 100).unwrap(), 300);
+        assert_eq!(leverage_x100(301, 100).unwrap(), 301);
+    }
+
+    #[test]
+    fn leverage_rejects_zero_collateral_and_overflow() {
+        assert!(leverage_x100(1, 0).is_err());
+        assert!(leverage_x100(u64::MAX, 1).is_err());
+    }
+}

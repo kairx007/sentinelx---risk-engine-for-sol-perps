@@ -66,4 +66,36 @@ pub mod risk_vault {
             new_risk_authority,
         )
     }
+
+    pub fn increase_position(
+        ctx: Context<IncreasePosition>,
+        side: PositionSide,
+        size_delta: u64,
+        notional_delta: u64,
+        collateral_delta: u64,
+    ) -> Result<()> {
+        crate::instructions::increase_position::handle_increase_position(
+            ctx,
+            side,
+            size_delta,
+            notional_delta,
+            collateral_delta,
+        )
+    }
+
+    pub fn reduce_position(
+        ctx: Context<ReducePosition>,
+        size_delta: u64,
+        notional_delta: u64,
+    ) -> Result<()> {
+        crate::instructions::reduce_position::handle_reduce_position(
+            ctx,
+            size_delta,
+            notional_delta,
+        )
+    }
+
+    pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
+        crate::instructions::close_position::handle_close_position(ctx)
+    }
 }
