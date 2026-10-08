@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CrossVenueRisk, EcosystemRisk, VenueSnapshot } from "./types.js";
-import { calculateCrossVenueRisk, calculateEcosystemRisk } from "./risk.js";
+import type { CrossVenueRisk, EcosystemRisk, VenueSnapshot } from "../src/types.js";
+import { calculateCrossVenueRisk, calculateEcosystemRisk } from "../src/risk.js";
 
 function venue(
   venue: VenueSnapshot["venue"],

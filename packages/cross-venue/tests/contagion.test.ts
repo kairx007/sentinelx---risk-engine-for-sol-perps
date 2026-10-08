@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { VenueSnapshot } from "./types.js";
-import { calculateContagionRisk } from "./contagion.js";
+import type { VenueSnapshot } from "../src/types.js";
+import { calculateContagionRisk } from "../src/contagion.js";
 
 type RiskLevel = "low" | "medium" | "high" | "critical";
 

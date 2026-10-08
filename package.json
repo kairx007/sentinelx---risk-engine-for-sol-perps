@@ -11,6 +11,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run packages",
+    "test:integration": "vitest run apps tests",
+    "test:anchor": "cd anchor/risk_vault && cargo test --workspace --all-targets",
+    "test:all": "bun run test:unit && bun run test:integration && bun run test:anchor",
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "format": "prettier --write .",

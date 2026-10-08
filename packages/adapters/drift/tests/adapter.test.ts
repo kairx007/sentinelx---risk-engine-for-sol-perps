@@ -2,8 +2,8 @@ import { BN, PerpMarkets, type OraclePriceData } from "@drift-labs/sdk";
 import { PublicKey } from "@solana/web3.js";
 import { MarketStateSchema } from "@perps-risk/types";
 import driftSnapshotFixture from "../../../../tests/fixtures/drift-market-snapshot.json";
-import { DriftAdapter } from "./index.js";
-import type { DriftMarketSnapshot, DriftReaderFactory } from "./index.js";
+import { DriftAdapter } from "../src/index.js";
+import type { DriftMarketSnapshot, DriftReaderFactory } from "../src/index.js";
 import { describe, expect, it, vi } from "vitest";
 
 function makeSnapshot(): Omit<DriftMarketSnapshot, "staleAfterMs"> {

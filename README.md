@@ -25,13 +25,24 @@ bun run test
 bun run build
 ```
 
+Tests can also be run by layer:
+
+```sh
+bun run test:unit        # shared package tests
+bun run test:integration # application and repository level tests
+bun run test:anchor      # Rust Anchor program tests (LiteSVM)
+bun run test:all         # all three layers
+```
+
 Use `bun run lint` and `bun run format:check` to check code style. Copy `.env.example` to `.env` when local environment values are needed.
 
 ## Repository layout
 
 - `apps/` — API, collector, and dashboard applications
 - `packages/` — shared types, metrics, risk, and venue adapters
-- `tests/` — fixtures and integration tests
+- `apps/*/tests/` and `packages/*/tests/` — dedicated tests kept outside production `src/` folders
+- `tests/` — shared fixtures and repository level contract tests
+- `anchor/risk_vault/programs/risk_vault/tests/` — on-chain program tests
 - `docs/` — project documentation
 
 ## Velocity market data

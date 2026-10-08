@@ -1,13 +1,13 @@
 import type { MarketState } from "@perps-risk/types";
 import driftMarketState from "../../../tests/fixtures/market-state-drift.json";
 import { describe, expect, it } from "vitest";
-import { calculateFundingMetrics } from "./funding.js";
-import { calculateLiquidationMetrics } from "./liquidation.js";
-import { calculateLiquidityMetrics } from "./liquidity.js";
-import { calculateOpenInterestMetrics } from "./open-interest.js";
-import { calculateOracleMetrics } from "./oracle.js";
-import { calculatePositioningMetrics } from "./positioning.js";
-import { calculateVolatilityMetrics } from "./volatility.js";
+import { calculateFundingMetrics } from "../src/funding.js";
+import { calculateLiquidationMetrics } from "../src/liquidation.js";
+import { calculateLiquidityMetrics } from "../src/liquidity.js";
+import { calculateOpenInterestMetrics } from "../src/open-interest.js";
+import { calculateOracleMetrics } from "../src/oracle.js";
+import { calculatePositioningMetrics } from "../src/positioning.js";
+import { calculateVolatilityMetrics } from "../src/volatility.js";
 
 const fixture = driftMarketState as MarketState;
 

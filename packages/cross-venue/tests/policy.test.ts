@@ -1,8 +1,8 @@
 import type { MarketRisk } from "@perps-risk/risk";
 import { MarketStateSchema, type MarketState } from "@perps-risk/types";
 import { describe, expect, it } from "vitest";
-import { buildRiskPolicyDecision } from "./policy.js";
-import type { ContagionRisk, EcosystemRisk, VenueSnapshot } from "./types.js";
+import { buildRiskPolicyDecision } from "../src/policy.js";
+import type { ContagionRisk, EcosystemRisk, VenueSnapshot } from "../src/types.js";
 
 const TIMESTAMP = "2026-10-08T00:00:00.000Z";
 

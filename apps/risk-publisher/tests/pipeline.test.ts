@@ -5,12 +5,12 @@ import {
 } from "@perps-risk/types";
 import { PublicKey } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
-import { calculateCurrentPolicy } from "./pipeline.js";
+import { calculateCurrentPolicy } from "../src/pipeline.js";
 import {
   buildUpdateRiskStateInstruction,
   deriveRiskStateAddress,
   deriveVaultAddress,
-} from "./risk-state.js";
+} from "../src/risk-state.js";
 
 function marketState(venue: Venue): MarketState {
   const observedAt = "2026-10-08T00:00:00.000Z";

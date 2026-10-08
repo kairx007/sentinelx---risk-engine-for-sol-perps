@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ContagionRisk, EcosystemRisk, VenueSnapshot } from "@perps-risk/cross-venue";
 import type { MarketRisk } from "@perps-risk/risk";
 import { MarketStateSchema, type MarketState } from "@perps-risk/types";
-import { createApiApp } from "./app.js";
-import { createMarketService } from "./market-service.js";
+import { createApiApp } from "../src/app.js";
+import { createMarketService } from "../src/market-service.js";
 
 const marketRisk: MarketRisk = {
   overallScore: 12,

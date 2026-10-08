@@ -1,8 +1,8 @@
 import type { ExchangeMarketConfig } from "@ellipsis-labs/rise";
 import { MarketStateSchema } from "@perps-risk/types";
 import { describe, expect, it, vi } from "vitest";
-import { PhoenixAdapter } from "./adapter.js";
-import type { PhoenixMarketReader } from "./types.js";
+import { PhoenixAdapter } from "../src/adapter.js";
+import type { PhoenixMarketReader } from "../src/types.js";
 
 const market = {
   symbol: "SOL-PERP",

@@ -1,8 +1,8 @@
 import { MarketStateSchema } from "@perps-risk/types";
 import { describe, expect, it, vi } from "vitest";
-import { JupiterAdapter } from "./adapter.js";
-import { createJupiterMarketReader } from "./reader.js";
-import { JUPITER_PERP_MARKETS, type JupiterMarketReader } from "./types.js";
+import { JupiterAdapter } from "../src/adapter.js";
+import { createJupiterMarketReader } from "../src/reader.js";
+import { JUPITER_PERP_MARKETS, type JupiterMarketReader } from "../src/types.js";
 
 describe("JupiterAdapter", () => {
   it("maps documented stats and leaves absent fields unavailable", async () => {

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import type { RiskPolicyDecision } from "@perps-risk/cross-venue";
 import { describe, expect, it } from "vitest";
-import { publishRiskPolicy, type RiskStateChain } from "./publisher.js";
+import { publishRiskPolicy, type RiskStateChain } from "../src/publisher.js";
 import {
   buildUpdateRiskStateInstruction,
   decodeRiskState,
@@ -11,7 +11,7 @@ import {
   encodeUpdateRiskState,
   RISK_VAULT_PROGRAM_ID,
   type RiskStateCommand,
-} from "./risk-state.js";
+} from "../src/risk-state.js";
 
 const VAULT_DISCRIMINATOR = Buffer.from([211, 8, 232, 43, 2, 152, 117, 119]);
 const RISK_STATE_DISCRIMINATOR = Buffer.from([

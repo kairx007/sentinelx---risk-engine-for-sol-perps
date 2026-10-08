@@ -10,7 +10,7 @@ import {
 import type { MarketRisk } from "@perps-risk/risk";
 import { MarketStateSchema, type MarketState } from "@perps-risk/types";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { evaluateMarketRisk } from "./risk-engine.js";
+import { evaluateMarketRisk } from "../src/risk-engine.js";
 
 const TIMESTAMP = "2026-10-08T00:00:00.000Z";
 const NOW = new Date(TIMESTAMP);

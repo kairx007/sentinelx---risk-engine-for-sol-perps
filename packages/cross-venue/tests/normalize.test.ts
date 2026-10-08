@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assetKey } from "./normalize.js";
+import { assetKey } from "../src/normalize.js";
 import type { MarketState } from "@perps-risk/types";
 
 function makeState(overrides: Partial<MarketState> = {}): MarketState {
