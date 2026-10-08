@@ -11,7 +11,12 @@ import type { VelocityMarketSnapshot } from "./types.js";
 function numberOrNull(value: BN | null, precision: BN, positive = false) {
   if (value === null) return null;
   const result = convertToNumber(value, precision);
-  if (!Number.isFinite(result) || (positive && result <= 0)) return null;
+  if (!Number.isFinite(result)) {
+    throw new Error("Velocity returned a non-finite numeric market value");
+  }
+  if (positive && result <= 0) {
+    throw new Error("Velocity returned a nonpositive price");
+  }
   return result;
 }
 
@@ -88,9 +93,13 @@ export function normalizeVelocityMarketSnapshot(
         );
         // lastFundingRate is quote-per-base (USDT per SOL/BTC/etc), not a
         // percentage.  Divide by the mark price to get a true rate.
-        if (rawRate === null || rawRate === 0) return null;
+        if (rawRate === null) return null;
         const mark = numberOrNull(snapshot.markPrice, PRICE_PRECISION);
-        if (mark === null || mark <= 0) return null;
+        if (mark === null) return null;
+        if (mark <= 0)
+          throw new Error(
+            "Velocity funding normalization requires a positive mark price",
+          );
         return rawRate / mark;
       })(),
       periodSeconds: (() => {
@@ -128,10 +137,10 @@ export function normalizeVelocityMarketSnapshot(
           sourceUpdatedAt === null
             ? null
             : Math.max(
-              0,
-              snapshot.collectedAt.getTime() -
-              new Date(sourceUpdatedAt).getTime(),
-            ),
+                0,
+                snapshot.collectedAt.getTime() -
+                  new Date(sourceUpdatedAt).getTime(),
+              ),
         staleAfterMs: snapshot.staleAfterMs,
       },
     },

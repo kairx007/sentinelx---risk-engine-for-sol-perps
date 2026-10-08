@@ -1,0 +1,15 @@
+{
+  "name": "@perps-risk/risk-publisher",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "publish-once": "bun src/main.ts"
+  },
+  "dependencies": {
+    "@perps-risk/adapter-phoenix": "workspace:*",
+    "@perps-risk/adapter-velocity": "workspace:*",
+    "@perps-risk/cross-venue": "workspace:*",
+    "@solana/web3.js": "1.99.0"
+  }
+}

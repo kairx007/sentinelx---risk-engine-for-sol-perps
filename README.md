@@ -4,9 +4,13 @@ An open-source risk intelligence system for Solana perpetual markets. The projec
 
 ## Project status
 
-The collector currently exposes a read-only Velocity perp market adapter. See
-[Velocity Adapter](./docs/velocity-adapter.md) for setup and data coverage.
-The phased roadmap is in [plan.md](./plan.md).
+The API exposes read-only Velocity and Phoenix market/risk views. The separate
+`@perps-risk/risk-publisher` command can publish a deterministic ecosystem
+policy using the vault's configured risk-authority key; it is an explicit
+one-shot command and never accepts arbitrary policy updates over the API. See
+[Velocity Adapter](./docs/velocity-adapter.md) and
+[Phase 7 integration](./docs/phase-7-integration.md). The phased roadmap is in
+[plan.md](./plan.md).
 
 ## Requirements
 

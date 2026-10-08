@@ -69,7 +69,10 @@ pub fn validate_action_against_risk_state(
                 VaultError::RiskStateStale
             );
             require!(
-                risk_state.observed_at <= current_timestamp + MAX_FUTURE_SKEW_SECONDS,
+                risk_state.observed_at
+                    <= current_timestamp
+                        .checked_add(MAX_FUTURE_SKEW_SECONDS)
+                        .ok_or(VaultError::RiskStateStale)?,
                 VaultError::RiskStateStale
             );
 
@@ -318,6 +321,18 @@ mod tests {
             ActionKind::IncreaseExposure,
             1_000,
             Some(100)
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn clock_timestamp_overflow_fails_closed() {
+        let state = make_state(RiskLevel::Low, ContagionState::None, 300, 1, 1, 1);
+        assert!(validate_action_against_risk_state(
+            &state,
+            ActionKind::IncreaseExposure,
+            i64::MAX,
+            Some(100),
         )
         .is_err());
     }

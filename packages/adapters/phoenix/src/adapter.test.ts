@@ -101,4 +101,32 @@ describe("PhoenixAdapter", () => {
       "staleAfterMs must be a positive safe integer",
     );
   });
+
+  it("rejects malformed prices and funding values instead of normalizing them to null", async () => {
+    const invalidPriceReader = reader();
+    const invalidPrice = await invalidPriceReader.readSnapshot("SOL-PERP");
+    vi.mocked(invalidPriceReader.readSnapshot).mockResolvedValue({
+      ...invalidPrice,
+      stats: { ...invalidPrice.stats, mark_price: 0 },
+    });
+    const priceAdapter = new PhoenixAdapter({
+      readerFactory: () => invalidPriceReader,
+    });
+    await expect(priceAdapter.getMarketState("SOL")).rejects.toThrow(
+      /nonpositive or non-finite price/,
+    );
+
+    const invalidFundingReader = reader();
+    const invalidFunding = await invalidFundingReader.readSnapshot("SOL-PERP");
+    vi.mocked(invalidFundingReader.readSnapshot).mockResolvedValue({
+      ...invalidFunding,
+      stats: { ...invalidFunding.stats, current_funding_rate: Number.NaN },
+    });
+    const fundingAdapter = new PhoenixAdapter({
+      readerFactory: () => invalidFundingReader,
+    });
+    await expect(fundingAdapter.getMarketState("SOL")).rejects.toThrow(
+      /non-finite funding rate/,
+    );
+  });
 });

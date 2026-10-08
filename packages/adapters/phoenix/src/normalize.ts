@@ -2,16 +2,26 @@ import { MarketStateSchema, type MarketState } from "@perps-risk/types";
 import type { PhoenixMarketSnapshot } from "./types.js";
 
 function positive(value: number | null | undefined) {
-  return value != null && Number.isFinite(value) && value > 0 ? value : null;
+  if (value == null) return null;
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error("Phoenix returned a nonpositive or non-finite price");
+  }
+  return value;
 }
 
 function nonnegative(value: number | null | undefined) {
-  return value != null && Number.isFinite(value) && value >= 0 ? value : null;
+  if (value == null) return null;
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error("Phoenix returned a negative or non-finite quantity");
+  }
+  return value;
 }
 
 function timestamp(value: number | bigint) {
   const milliseconds = Number(value);
-  if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0) return null;
+  if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0) {
+    throw new Error("Phoenix returned an invalid market observation timestamp");
+  }
   const date = new Date(milliseconds);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
@@ -28,19 +38,49 @@ function openInterestBase(snapshot: PhoenixMarketSnapshot) {
     !Number.isSafeInteger(decimals) ||
     decimals < 0
   ) {
-    return null;
+    if (rawLots === undefined) return null;
+    throw new Error("Phoenix returned invalid open-interest lot precision");
   }
+  let lots: bigint;
   try {
-    const value = Number(BigInt(rawLots)) / 10 ** decimals;
-    return nonnegative(value);
+    lots = BigInt(rawLots);
   } catch {
-    return null;
+    throw new Error("Phoenix returned malformed open-interest lots");
   }
+  if (lots < 0n) throw new Error("Phoenix returned negative open interest");
+  const value = Number(lots) / 10 ** decimals;
+  if (!Number.isFinite(value))
+    throw new Error(
+      "Phoenix open interest is outside the supported numeric range",
+    );
+  return value;
 }
 
 export function normalizePhoenixMarketSnapshot(
   snapshot: PhoenixMarketSnapshot,
 ): MarketState {
+  if (
+    snapshot.stats.symbol.trim().toUpperCase() !==
+      snapshot.market.symbol.trim().toUpperCase() ||
+    snapshot.orderbook.symbol.trim().toUpperCase() !==
+      snapshot.market.symbol.trim().toUpperCase()
+  ) {
+    throw new Error(
+      "Phoenix market, stats, and orderbook identities do not match",
+    );
+  }
+  if (
+    !Number.isSafeInteger(snapshot.market.assetId) ||
+    snapshot.market.assetId < 0
+  ) {
+    throw new Error("Phoenix returned an invalid market identifier");
+  }
+  if (
+    !Number.isSafeInteger(snapshot.market.fundingPeriodSeconds) ||
+    snapshot.market.fundingPeriodSeconds <= 0
+  ) {
+    throw new Error("Phoenix returned an invalid funding period");
+  }
   const observedAt = timestamp(snapshot.stats.timestamp_ms);
   const totalOpenInterest = openInterestBase(snapshot);
   const bids = snapshot.orderbook.bids;
@@ -79,14 +119,13 @@ export function normalizePhoenixMarketSnapshot(
       observedAt,
     },
     funding: {
-      rate: Number.isFinite(snapshot.stats.current_funding_rate)
-        ? snapshot.stats.current_funding_rate
-        : null,
-      periodSeconds:
-        Number.isSafeInteger(snapshot.market.fundingPeriodSeconds) &&
-        snapshot.market.fundingPeriodSeconds > 0
-          ? snapshot.market.fundingPeriodSeconds
-          : null,
+      rate: (() => {
+        if (!Number.isFinite(snapshot.stats.current_funding_rate)) {
+          throw new Error("Phoenix returned a non-finite funding rate");
+        }
+        return snapshot.stats.current_funding_rate;
+      })(),
+      periodSeconds: snapshot.market.fundingPeriodSeconds,
       observedAt,
     },
     liquidation: {
