@@ -185,4 +185,43 @@ mod tests {
         )
         .is_err());
     }
+
+    #[test]
+    fn accepts_age_boundary_and_rejects_one_second_stale() {
+        let cfg = config();
+        assert!(validate_pyth_price(&update(1_000_000, 0, -6, 100), &cfg, ACCOUNT, 130).is_ok());
+        assert!(
+            validate_pyth_price(&update(1_000_000, 0, -6, 100), &cfg, ACCOUNT, 131)
+                .unwrap_err()
+                .to_string()
+                .contains("StaleOraclePrice")
+        );
+    }
+
+    #[test]
+    fn validates_confidence_ratio_and_normalization_boundaries() {
+        let cfg = config();
+        assert!(validate_pyth_price(&update(10_000, 100, -4, 100), &cfg, ACCOUNT, 100).is_ok());
+        assert!(validate_pyth_price(&update(10_000, 101, -4, 100), &cfg, ACCOUNT, 100).is_err());
+        assert_eq!(
+            validate_pyth_price(&update(1_000_000, 0, -12, 100), &cfg, ACCOUNT, 100)
+                .unwrap()
+                .price,
+            1
+        );
+        assert_eq!(
+            validate_pyth_price(&update(100_000, 0, -11, 100), &cfg, ACCOUNT, 100)
+                .unwrap()
+                .price,
+            1
+        );
+        assert!(validate_pyth_price(&update(1, 0, -12, 100), &cfg, ACCOUNT, 99).is_err());
+    }
+
+    #[test]
+    fn rejects_normalized_zero_and_out_of_range_prices() {
+        let cfg = config();
+        assert!(validate_pyth_price(&update(1, 0, -12, 100), &cfg, ACCOUNT, 100).is_err());
+        assert!(validate_pyth_price(&update(i64::MAX, 0, 0, 100), &cfg, ACCOUNT, 100).is_err());
+    }
 }

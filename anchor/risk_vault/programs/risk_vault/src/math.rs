@@ -241,4 +241,49 @@ mod tests {
         assert!(initial_margin(1, 0).is_err());
         assert!(unrealized_pnl(Long, u64::MAX, 1, u64::MAX).is_err());
     }
+
+    #[test]
+    fn pnl_covers_both_directions_break_even_and_fractional_atoms() {
+        use crate::state::PositionSide::{Long, Short};
+        assert_eq!(
+            unrealized_pnl(Long, 1_000_000, 2_000_000, 3_000_000).unwrap(),
+            1_000_000
+        );
+        assert_eq!(
+            unrealized_pnl(Long, 1_000_000, 3_000_000, 2_000_000).unwrap(),
+            -1_000_000
+        );
+        assert_eq!(
+            unrealized_pnl(Short, 1_000_000, 3_000_000, 2_000_000).unwrap(),
+            1_000_000
+        );
+        assert_eq!(
+            unrealized_pnl(Short, 1_000_000, 2_000_000, 3_000_000).unwrap(),
+            -1_000_000
+        );
+        assert_eq!(unrealized_pnl(Long, 7, 42, 42).unwrap(), 0);
+        assert_eq!(unrealized_pnl(Short, 7, 42, 42).unwrap(), 0);
+        assert_eq!(unrealized_pnl(Long, 1, 2, 3).unwrap(), 0);
+        assert_eq!(unrealized_pnl(Long, 1, 3, 2).unwrap(), -1);
+        assert_eq!(unrealized_pnl(Short, 1, 3, 2).unwrap(), 0);
+        assert_eq!(unrealized_pnl(Short, 1, 2, 3).unwrap(), -1);
+    }
+
+    #[test]
+    fn weighted_entry_uses_quantity_and_rounds_conservatively_by_side() {
+        use crate::state::PositionSide::{Long, Short};
+        assert_eq!(weighted_entry_price(Long, 2, 100, 1, 200).unwrap(), 134);
+        assert_eq!(weighted_entry_price(Short, 2, 100, 1, 200).unwrap(), 133);
+        assert_eq!(weighted_entry_price(Long, 1, 100, 1, 100).unwrap(), 100);
+        assert!(weighted_entry_price(Long, u64::MAX, 1, 1, 1).is_err());
+        assert!(weighted_entry_price(Long, u64::MAX, u64::MAX, u64::MAX, u64::MAX).is_err());
+    }
+
+    #[test]
+    fn notional_and_margin_reject_unrepresentable_results() {
+        assert!(notional_for_size(u64::MAX, u64::MAX).is_err());
+        assert!(initial_margin(u64::MAX, 1).is_err());
+        assert_eq!(maintenance_margin(u64::MAX, 10_000).unwrap(), u64::MAX);
+        assert_eq!(maintenance_margin(101, 100).unwrap(), 2);
+    }
 }

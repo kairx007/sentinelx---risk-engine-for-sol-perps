@@ -16,7 +16,8 @@ use solana_account::Account;
 use solana_keypair::Keypair;
 use solana_message::{Message, VersionedMessage};
 use solana_signer::Signer;
-use solana_transaction::versioned::VersionedTransaction;
+use solana_transaction::{versioned::VersionedTransaction, InstructionError};
+use solana_transaction_error::TransactionError;
 
 struct Fixture {
     svm: LiteSVM,
@@ -160,7 +161,11 @@ fn set_token_account(svm: &mut LiteSVM, address: Pubkey, mint: Pubkey, owner: Pu
     .unwrap();
 }
 
-fn send(svm: &mut LiteSVM, payer: &Keypair, instruction: Instruction) -> bool {
+fn send_result(
+    svm: &mut LiteSVM,
+    payer: &Keypair,
+    instruction: Instruction,
+) -> Result<(), TransactionError> {
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(&payer.pubkey()),
@@ -169,9 +174,15 @@ fn send(svm: &mut LiteSVM, payer: &Keypair, instruction: Instruction) -> bool {
     let transaction =
         match VersionedTransaction::try_new(VersionedMessage::Legacy(message), &[payer]) {
             Ok(transaction) => transaction,
-            Err(_) => return false,
+            Err(_) => return Err(TransactionError::SignatureFailure),
         };
-    svm.send_transaction(transaction).is_ok()
+    svm.send_transaction(transaction)
+        .map(|_| ())
+        .map_err(|err| err.err)
+}
+
+fn send(svm: &mut LiteSVM, payer: &Keypair, instruction: Instruction) -> bool {
+    send_result(svm, payer, instruction).is_ok()
 }
 
 fn initialize_vault_instruction(
@@ -311,6 +322,31 @@ fn initialize_market_config_instruction(
             oracle_update_account: fixture.oracle_update_account,
             market_config: market_config_pda(&fixture.vault, &market),
             system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    )
+}
+
+fn update_market_config_instruction(
+    fixture: &Fixture,
+    signer: Pubkey,
+    market: Pubkey,
+    maintenance_margin_bps: u16,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::UpdateMarketConfig {
+            feed_id: fixture.feed_id,
+            maintenance_margin_bps,
+            max_confidence_bps: 100,
+            max_age_seconds: 30,
+        }
+        .data(),
+        risk_vault::accounts::UpdateMarketConfig {
+            authority: signer,
+            vault: fixture.vault,
+            market_config: market_config_pda(&fixture.vault, &market),
+            oracle_update_account: fixture.oracle_update_account,
         }
         .to_account_metas(None),
     )
@@ -1106,6 +1142,44 @@ fn funded_position_fixture() -> (Fixture, User, Pubkey) {
 }
 
 #[test]
+fn market_config_is_bound_to_its_pda_and_only_authority_can_update_it() {
+    let (mut fixture, _user, market) = funded_position_fixture();
+    let config_address = market_config_pda(&fixture.vault, &market);
+    let account = fixture.svm.get_account(&config_address).unwrap();
+    let mut data: &[u8] = &account.data;
+    let initial = risk_vault::state::MarketConfig::try_deserialize(&mut data).unwrap();
+    assert_eq!(initial.authority, fixture.vault_authority.pubkey());
+    assert_eq!(initial.vault, fixture.vault);
+    assert_eq!(initial.market, market);
+    assert_eq!(initial.oracle_update_account, fixture.oracle_update_account);
+    assert_eq!(initial.feed_id, fixture.feed_id);
+    assert_eq!(initial.maintenance_margin_bps, 1_000);
+    assert_eq!(initial.version, 1);
+
+    let authorized =
+        update_market_config_instruction(&fixture, fixture.vault_authority.pubkey(), market, 1_500);
+    assert!(send(&mut fixture.svm, &fixture.vault_authority, authorized));
+    let account = fixture.svm.get_account(&config_address).unwrap();
+    let mut data: &[u8] = &account.data;
+    let updated = risk_vault::state::MarketConfig::try_deserialize(&mut data).unwrap();
+    assert_eq!(updated.maintenance_margin_bps, 1_500);
+    assert_eq!(updated.version, 2);
+
+    let unauthorized =
+        update_market_config_instruction(&fixture, fixture.risk_authority.pubkey(), market, 2_000);
+    let error = send_result(&mut fixture.svm, &fixture.risk_authority, unauthorized).unwrap_err();
+    assert_eq!(
+        error,
+        TransactionError::InstructionError(0, InstructionError::Custom(6010))
+    );
+    let account = fixture.svm.get_account(&config_address).unwrap();
+    let mut data: &[u8] = &account.data;
+    let final_config = risk_vault::state::MarketConfig::try_deserialize(&mut data).unwrap();
+    assert_eq!(final_config.maintenance_margin_bps, 1_500);
+    assert_eq!(final_config.version, 2);
+}
+
+#[test]
 fn creates_position_and_stores_all_identity_and_accounting_fields() {
     let (mut fixture, user, market) = funded_position_fixture();
     assert!(send_position(
@@ -1400,6 +1474,35 @@ fn partial_reduction_releases_proportional_collateral_without_risk_state() {
 }
 
 #[test]
+fn loss_making_partial_reduction_quarantines_released_slice_without_settlement() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    let now = fixture.svm.get_sysvar::<Clock>().unix_timestamp;
+    let feed_id = fixture.feed_id;
+    set_pyth_price(&mut fixture, 100_000_000, 0, -8, now, feed_id);
+    assert!(send_reduction(&mut fixture, &user, market, 50, 150));
+
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.size, 50);
+    assert_eq!(position.notional, 150);
+    assert_eq!(position.collateral_locked, 50);
+    assert_eq!(position.bad_debt, 50);
+    let account = user_state(&fixture, &user);
+    assert_eq!(account.shares, 500);
+    assert_eq!(account.locked_collateral, 50);
+    assert_eq!(account.settlement_reserved, 50);
+    assert_eq!(vault_state(&fixture).total_deposits, 500);
+}
+
+#[test]
 fn over_reduction_and_zero_reduction_are_atomic() {
     let (mut fixture, user, market) = funded_position_fixture();
     assert!(send_position(
@@ -1565,6 +1668,197 @@ fn healthy_or_stale_price_position_cannot_be_liquidated() {
         risk_vault::state::PositionStatus::Open
     );
     assert_eq!(user_state(&fixture, &user).settlement_reserved, 0);
+}
+
+#[test]
+fn liquidation_boundary_equality_is_eligible_and_quarantines_only_position_collateral() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    let other = create_user(&mut fixture, 1_000);
+    assert!(send_deposit(&mut fixture, &other, 100));
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    // Set collateral equal to the 10% maintenance amount at the unchanged entry price.
+    let mut account = fixture.svm.get_account(&user.user_vault_account).unwrap();
+    let mut data: &[u8] = &account.data;
+    let mut user_account = risk_vault::state::UserVaultAccount::try_deserialize(&mut data).unwrap();
+    user_account.locked_collateral = 30;
+    let mut serialized = Vec::new();
+    user_account.try_serialize(&mut serialized).unwrap();
+    account.data = serialized;
+    fixture
+        .svm
+        .set_account(user.user_vault_account, account)
+        .unwrap();
+    let (position_key, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    let mut account = fixture.svm.get_account(&position_key).unwrap();
+    let mut data: &[u8] = &account.data;
+    let mut position = risk_vault::state::Position::try_deserialize(&mut data).unwrap();
+    position.collateral_locked = 30;
+    let mut serialized = Vec::new();
+    position.try_serialize(&mut serialized).unwrap();
+    account.data = serialized;
+    fixture.svm.set_account(position_key, account).unwrap();
+
+    let clock = fixture.svm.get_sysvar::<Clock>();
+    let feed_id = fixture.feed_id;
+    set_pyth_price(
+        &mut fixture,
+        300_000_000,
+        0,
+        -8,
+        clock.unix_timestamp,
+        feed_id,
+    );
+
+    let before_vault = vault_state(&fixture);
+    let before_other = user_state(&fixture, &other);
+    let random_keeper = Keypair::new();
+    fixture
+        .svm
+        .airdrop(&random_keeper.pubkey(), 1_000_000_000)
+        .unwrap();
+    let mut ix = liquidate_instruction(&fixture, &user, market);
+    ix.accounts[0].pubkey = random_keeper.pubkey();
+    assert!(send(&mut fixture.svm, &random_keeper, ix));
+
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(position.size, 0);
+    assert_eq!(position.notional, 0);
+    assert_eq!(position.bad_debt, 0);
+    assert_eq!(user_state(&fixture, &user).settlement_reserved, 30);
+    let after_vault = vault_state(&fixture);
+    assert_eq!(after_vault.total_deposits, before_vault.total_deposits);
+    assert_eq!(after_vault.total_shares, before_vault.total_shares);
+    let after_other = user_state(&fixture, &other);
+    assert_eq!(after_other.shares, before_other.shares);
+    assert_eq!(
+        after_other.locked_collateral,
+        before_other.locked_collateral
+    );
+    assert_eq!(
+        after_other.settlement_reserved,
+        before_other.settlement_reserved
+    );
+}
+
+#[test]
+fn unhealthy_liquidation_works_during_critical_stale_risk_state_and_is_atomic_on_failure() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::Critical,
+        90,
+        risk_vault::state::ContagionState::Active,
+        0,
+        2,
+    );
+    let before_position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    let before_user = user_state(&fixture, &user);
+    let before_vault = vault_state(&fixture);
+    let mut ix = liquidate_instruction(&fixture, &user, market);
+    let clock = fixture.svm.get_sysvar::<Clock>();
+    let feed_id = fixture.feed_id;
+    set_pyth_price(
+        &mut fixture,
+        3_000_000,
+        0,
+        -6,
+        clock.unix_timestamp,
+        feed_id,
+    );
+    let failure = send_result(&mut fixture.svm, &fixture.vault_authority, ix.clone()).unwrap_err();
+    assert_eq!(
+        failure,
+        TransactionError::InstructionError(0, InstructionError::Custom(6045))
+    );
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market),
+        before_position
+    );
+    let after_user = user_state(&fixture, &user);
+    assert_eq!(after_user.shares, before_user.shares);
+    assert_eq!(after_user.locked_collateral, before_user.locked_collateral);
+    assert_eq!(
+        after_user.settlement_reserved,
+        before_user.settlement_reserved
+    );
+    let after_vault = vault_state(&fixture);
+    assert_eq!(after_vault.total_deposits, before_vault.total_deposits);
+    assert_eq!(after_vault.total_shares, before_vault.total_shares);
+
+    let mut clock = fixture.svm.get_sysvar::<Clock>();
+    clock.unix_timestamp += risk_vault::constants::MAX_RISK_STATE_AGE_SECONDS + 1;
+    fixture.svm.set_sysvar(&clock);
+    set_pyth_price(
+        &mut fixture,
+        100_000_000,
+        0,
+        -8,
+        clock.unix_timestamp,
+        feed_id,
+    );
+    let keeper = Keypair::new();
+    ix.accounts[0].pubkey = keeper.pubkey();
+    fixture
+        .svm
+        .airdrop(&keeper.pubkey(), 1_000_000_000)
+        .unwrap();
+    assert!(send(&mut fixture.svm, &keeper, ix));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market).status,
+        risk_vault::state::PositionStatus::Closed
+    );
+}
+
+#[test]
+fn liquidation_rejects_wrong_oracle_account_without_mutating_accounts() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    let before_position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    let before_user = user_state(&fixture, &user);
+    let mut ix = liquidate_instruction(&fixture, &user, market);
+    ix.accounts[5].pubkey = Pubkey::new_unique();
+    let error = send_result(&mut fixture.svm, &fixture.vault_authority, ix).unwrap_err();
+    assert_eq!(
+        error,
+        TransactionError::InstructionError(0, InstructionError::Custom(3012))
+    );
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market),
+        before_position
+    );
+    let after_user = user_state(&fixture, &user);
+    assert_eq!(after_user.shares, before_user.shares);
+    assert_eq!(after_user.locked_collateral, before_user.locked_collateral);
+    assert_eq!(
+        after_user.settlement_reserved,
+        before_user.settlement_reserved
+    );
 }
 
 #[test]

@@ -2383,6 +2383,7 @@ dependencies = [
  "solana-message",
  "solana-signer",
  "solana-transaction",
+ "solana-transaction-error",
 ]
 
 [[package]]
