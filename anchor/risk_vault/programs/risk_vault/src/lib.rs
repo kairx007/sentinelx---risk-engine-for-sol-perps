@@ -2,6 +2,7 @@ pub mod constants;
 pub mod errors;
 pub mod instructions;
 pub mod math;
+pub mod oracle;
 pub mod policy;
 pub mod state;
 
@@ -26,6 +27,40 @@ pub mod risk_vault {
     pub fn initialize_user_vault_account(ctx: Context<InitializeUserVaultAccount>) -> Result<()> {
         crate::instructions::initialize_user_vault_account::handle_initialize_user_vault_account(
             ctx,
+        )
+    }
+
+    pub fn initialize_market_config(
+        ctx: Context<InitializeMarketConfig>,
+        market: Pubkey,
+        feed_id: [u8; 32],
+        maintenance_margin_bps: u16,
+        max_confidence_bps: u16,
+        max_age_seconds: i64,
+    ) -> Result<()> {
+        crate::instructions::market_config::handle_initialize_market_config(
+            ctx,
+            market,
+            feed_id,
+            maintenance_margin_bps,
+            max_confidence_bps,
+            max_age_seconds,
+        )
+    }
+
+    pub fn update_market_config(
+        ctx: Context<UpdateMarketConfig>,
+        feed_id: [u8; 32],
+        maintenance_margin_bps: u16,
+        max_confidence_bps: u16,
+        max_age_seconds: i64,
+    ) -> Result<()> {
+        crate::instructions::market_config::handle_update_market_config(
+            ctx,
+            feed_id,
+            maintenance_margin_bps,
+            max_confidence_bps,
+            max_age_seconds,
         )
     }
 
@@ -97,5 +132,9 @@ pub mod risk_vault {
 
     pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
         crate::instructions::close_position::handle_close_position(ctx)
+    }
+
+    pub fn liquidate_position(ctx: Context<LiquidatePosition>) -> Result<()> {
+        crate::instructions::liquidate_position::handle_liquidate_position(ctx)
     }
 }

@@ -72,4 +72,30 @@ pub enum VaultError {
     InvalidPrice,
     #[msg("Collateral release is too small")]
     CollateralReleaseTooSmall,
+    #[msg("Oracle account does not match the configured market")]
+    InvalidOracleAccount,
+    #[msg("Oracle feed does not match the configured market")]
+    WrongOracleFeed,
+    #[msg("Oracle price is invalid")]
+    InvalidOraclePrice,
+    #[msg("Oracle confidence exceeds the configured limit")]
+    InvalidOracleConfidence,
+    #[msg("Oracle price is stale")]
+    StaleOraclePrice,
+    #[msg("Oracle timestamp is in the future")]
+    FutureOraclePrice,
+    #[msg("Oracle exponent is unsupported")]
+    UnsupportedPriceExponent,
+    #[msg("Normalized oracle price is out of range")]
+    PriceOutOfRange,
+    #[msg("Market configuration is invalid")]
+    InvalidMarketConfig,
+    #[msg("Margin configuration is invalid")]
+    InvalidMarginConfig,
+    #[msg("Position is healthy and cannot be liquidated")]
+    PositionHealthy,
+    #[msg("Position account schema version is unsupported")]
+    InvalidPositionVersion,
+    #[msg("Position collateral is below the required initial margin")]
+    InsufficientInitialMargin,
 }

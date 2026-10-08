@@ -76,6 +76,122 @@ pub fn leverage_x100(notional: u64, collateral: u64) -> Result<u16> {
     u16::try_from(leverage).map_err(|_| error!(VaultError::ConversionOverflow))
 }
 
+pub fn notional_for_size(size: u64, price: u64) -> Result<u64> {
+    require!(size > 0 && price > 0, VaultError::InvalidPrice);
+    let value = (size as u128)
+        .checked_mul(price as u128)
+        .ok_or(VaultError::ArithmeticOverflow)?
+        .checked_div(crate::constants::QUANTITY_SCALE as u128)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    u64::try_from(value).map_err(|_| error!(VaultError::ConversionOverflow))
+}
+
+/// PnL is in quote/collateral atoms. Profits round down; losses round away
+/// from zero so truncation cannot understate the amount at risk.
+pub fn unrealized_pnl(
+    side: crate::state::PositionSide,
+    size: u64,
+    entry_price: u64,
+    current_price: u64,
+) -> Result<i128> {
+    use crate::state::PositionSide::{Long, Short};
+    require!(
+        size > 0 && entry_price > 0 && current_price > 0,
+        VaultError::InvalidPrice
+    );
+    let price_delta = match side {
+        Long => (current_price as i128)
+            .checked_sub(entry_price as i128)
+            .ok_or(VaultError::ArithmeticOverflow)?,
+        Short => (entry_price as i128)
+            .checked_sub(current_price as i128)
+            .ok_or(VaultError::ArithmeticOverflow)?,
+    };
+    let product = price_delta
+        .checked_mul(size as i128)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let scale = crate::constants::QUANTITY_SCALE as i128;
+    if product < 0 {
+        let magnitude = product
+            .checked_neg()
+            .ok_or(VaultError::ArithmeticOverflow)?;
+        let rounded = magnitude
+            .checked_add(scale - 1)
+            .ok_or(VaultError::ArithmeticOverflow)?
+            .checked_div(scale)
+            .ok_or(VaultError::ArithmeticOverflow)?;
+        rounded
+            .checked_neg()
+            .ok_or(VaultError::ArithmeticOverflow.into())
+    } else {
+        product
+            .checked_div(scale)
+            .ok_or(VaultError::ArithmeticOverflow.into())
+    }
+}
+
+pub fn weighted_entry_price(
+    side: crate::state::PositionSide,
+    old_size: u64,
+    old_price: u64,
+    added_size: u64,
+    added_price: u64,
+) -> Result<u64> {
+    require!(added_size > 0 && added_price > 0, VaultError::InvalidPrice);
+    if old_size == 0 {
+        return Ok(added_price);
+    }
+    require!(old_price > 0, VaultError::InvalidPosition);
+    let total_size = old_size
+        .checked_add(added_size)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let weighted = (old_size as u128)
+        .checked_mul(old_price as u128)
+        .and_then(|v| v.checked_add((added_size as u128).checked_mul(added_price as u128)?))
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let divisor = total_size as u128;
+    let quotient = weighted
+        .checked_div(divisor)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let rounded = if side == crate::state::PositionSide::Long && weighted % divisor != 0 {
+        quotient
+            .checked_add(1)
+            .ok_or(VaultError::ArithmeticOverflow)?
+    } else {
+        quotient
+    };
+    u64::try_from(rounded).map_err(|_| error!(VaultError::ConversionOverflow))
+}
+
+pub fn initial_margin(notional: u64, leverage_x100: u16) -> Result<u64> {
+    require!(notional > 0, VaultError::InvalidPrice);
+    require!(leverage_x100 > 0, VaultError::LeverageLimitExceeded);
+    // `max_leverage_x100 = 300` means 3.00x, so divide by 300/100.
+    let numerator = (notional as u128)
+        .checked_mul(100)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let divisor = leverage_x100 as u128;
+    let rounded = numerator
+        .checked_add(divisor - 1)
+        .ok_or(VaultError::ArithmeticOverflow)?
+        .checked_div(divisor)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    u64::try_from(rounded).map_err(|_| error!(VaultError::ConversionOverflow))
+}
+
+pub fn maintenance_margin(notional: u64, margin_bps: u16) -> Result<u64> {
+    let numerator = (notional as u128)
+        .checked_mul(margin_bps as u128)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    let divisor = 10_000_u128;
+    let rounded = numerator
+        .checked_add(divisor - 1)
+        .ok_or(VaultError::ArithmeticOverflow)?
+        .checked_div(divisor)
+        .ok_or(VaultError::ArithmeticOverflow)?;
+    u64::try_from(rounded).map_err(|_| error!(VaultError::ConversionOverflow))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +206,39 @@ mod tests {
     fn leverage_rejects_zero_collateral_and_overflow() {
         assert!(leverage_x100(1, 0).is_err());
         assert!(leverage_x100(u64::MAX, 1).is_err());
+    }
+
+    #[test]
+    fn pnl_is_signed_and_rounds_losses_away_from_zero() {
+        use crate::state::PositionSide::{Long, Short};
+        assert_eq!(
+            unrealized_pnl(Long, 1_000_000, 2_000_000, 2_500_000).unwrap(),
+            500_000
+        );
+        assert_eq!(
+            unrealized_pnl(Long, 1_000_000, 2_500_000, 2_000_000).unwrap(),
+            -500_000
+        );
+        assert_eq!(
+            unrealized_pnl(Short, 1_000_000, 2_500_000, 2_000_000).unwrap(),
+            500_000
+        );
+        assert_eq!(
+            unrealized_pnl(Short, 1_000_000, 2_000_000, 2_500_000).unwrap(),
+            -500_000
+        );
+        assert_eq!(unrealized_pnl(Long, 1, 2_000_001, 2_000_000).unwrap(), -1);
+    }
+
+    #[test]
+    fn weighted_entry_and_margin_round_conservatively() {
+        use crate::state::PositionSide::{Long, Short};
+        assert_eq!(weighted_entry_price(Long, 1, 1, 1, 2).unwrap(), 2);
+        assert_eq!(weighted_entry_price(Short, 1, 1, 1, 2).unwrap(), 1);
+        assert_eq!(initial_margin(301, 300).unwrap(), 101);
+        assert_eq!(maintenance_margin(1, 1).unwrap(), 1);
+        assert_eq!(notional_for_size(100, 3_000_000).unwrap(), 300);
+        assert!(initial_margin(1, 0).is_err());
+        assert!(unrealized_pnl(Long, u64::MAX, 1, u64::MAX).is_err());
     }
 }

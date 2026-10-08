@@ -11,6 +11,7 @@ use anchor_spl::token::{
     ID as TOKEN_PROGRAM_ID,
 };
 use litesvm::LiteSVM;
+use pyth_solana_receiver_sdk::price_update::{PriceFeedMessage, PriceUpdateV2, VerificationLevel};
 use solana_account::Account;
 use solana_keypair::Keypair;
 use solana_message::{Message, VersionedMessage};
@@ -19,10 +20,13 @@ use solana_transaction::versioned::VersionedTransaction;
 
 struct Fixture {
     svm: LiteSVM,
+    vault_authority: Keypair,
     risk_authority: Keypair,
     collateral_mint: Pubkey,
     vault: Pubkey,
     vault_token_account: Pubkey,
+    oracle_update_account: Pubkey,
+    feed_id: [u8; 32],
 }
 
 struct User {
@@ -48,6 +52,58 @@ fn risk_state_pda(vault: &Pubkey) -> Pubkey {
         &risk_vault::id(),
     )
     .0
+}
+
+fn market_config_pda(vault: &Pubkey, market: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[
+            risk_vault::constants::MARKET_CONFIG_SEED,
+            vault.as_ref(),
+            market.as_ref(),
+        ],
+        &risk_vault::id(),
+    )
+    .0
+}
+
+fn set_pyth_price(
+    fixture: &mut Fixture,
+    price: i64,
+    conf: u64,
+    exponent: i32,
+    publish_time: i64,
+    feed_id: [u8; 32],
+) {
+    let update = PriceUpdateV2 {
+        write_authority: Pubkey::new_unique(),
+        verification_level: VerificationLevel::Full,
+        price_message: PriceFeedMessage {
+            feed_id,
+            price,
+            conf,
+            exponent,
+            publish_time,
+            prev_publish_time: publish_time.saturating_sub(1),
+            ema_price: price,
+            ema_conf: conf,
+        },
+        posted_slot: 1,
+    };
+    let mut data = Vec::new();
+    update.try_serialize(&mut data).unwrap();
+    fixture
+        .svm
+        .set_account(
+            fixture.oracle_update_account,
+            Account {
+                lamports: 1_000_000,
+                data,
+                owner: pyth_solana_receiver_sdk::ID,
+                executable: false,
+                rent_epoch: 0,
+            },
+        )
+        .unwrap();
 }
 
 fn user_vault_pda(vault: &Pubkey, owner: &Pubkey) -> (Pubkey, u8) {
@@ -230,6 +286,36 @@ fn risk_update_instruction(
     )
 }
 
+fn initialize_market_config_instruction(
+    fixture: &Fixture,
+    market: Pubkey,
+    max_age_seconds: i64,
+    maintenance_margin_bps: u16,
+    max_confidence_bps: u16,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::InitializeMarketConfig {
+            market,
+            feed_id: fixture.feed_id,
+            maintenance_margin_bps,
+            max_confidence_bps,
+            max_age_seconds,
+        }
+        .data(),
+        risk_vault::accounts::InitializeMarketConfig {
+            authority: fixture.vault_authority.pubkey(),
+            vault: fixture.vault,
+            collateral_mint: fixture.collateral_mint,
+            market,
+            oracle_update_account: fixture.oracle_update_account,
+            market_config: market_config_pda(&fixture.vault, &market),
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    )
+}
+
 fn send_deposit(fixture: &mut Fixture, user: &User, amount: u64) -> bool {
     let instruction = deposit_instruction(user.keypair.pubkey(), user, fixture, amount);
     send(&mut fixture.svm, &user.keypair, instruction)
@@ -258,6 +344,8 @@ fn setup() -> Fixture {
     let initializer = Keypair::new();
     let risk_authority = Keypair::new();
     let collateral_mint = Pubkey::new_unique();
+    let oracle_update_account = Pubkey::new_unique();
+    let feed_id = [7_u8; 32];
     let (vault, _) = vault_pda(&collateral_mint);
     let vault_token_account = vault_ata(&vault, &collateral_mint);
 
@@ -293,13 +381,21 @@ fn setup() -> Fixture {
     );
     assert!(send(&mut svm, &initializer, initialize));
 
-    Fixture {
+    let mut clock = svm.get_sysvar::<Clock>();
+    clock.unix_timestamp = 1_000_000;
+    svm.set_sysvar(&clock);
+    let mut fixture = Fixture {
         svm,
+        vault_authority: initializer,
         risk_authority,
         collateral_mint,
         vault,
         vault_token_account,
-    }
+        oracle_update_account,
+        feed_id,
+    };
+    set_pyth_price(&mut fixture, 300_000_000, 1_000, -8, 1_000_000, feed_id);
+    fixture
 }
 
 fn create_user(fixture: &mut Fixture, initial_tokens: u64) -> User {
@@ -799,6 +895,12 @@ fn position_pda(vault: &Pubkey, owner: &Pubkey, market: &Pubkey) -> (Pubkey, u8)
     )
 }
 
+fn set_clock(svm: &mut LiteSVM, timestamp: i64) {
+    let mut clock = svm.get_sysvar::<Clock>();
+    clock.unix_timestamp = timestamp;
+    svm.set_sysvar(&clock);
+}
+
 fn position_instruction(
     fixture: &Fixture,
     user: &User,
@@ -824,6 +926,8 @@ fn position_instruction(
             user_vault_account: user.user_vault_account,
             risk_state: risk_state_pda(&fixture.vault),
             market,
+            market_config: market_config_pda(&fixture.vault, &market),
+            oracle_update_account: fixture.oracle_update_account,
             position,
             clock: Clock::id(),
             system_program: system_program::ID,
@@ -852,7 +956,10 @@ fn reduce_instruction(
             vault: fixture.vault,
             user_vault_account: user.user_vault_account,
             market,
+            market_config: market_config_pda(&fixture.vault, &market),
+            oracle_update_account: fixture.oracle_update_account,
             position,
+            clock: Clock::id(),
         }
         .to_account_metas(None),
     )
@@ -868,7 +975,30 @@ fn close_instruction(fixture: &Fixture, user: &User, market: Pubkey) -> Instruct
             vault: fixture.vault,
             user_vault_account: user.user_vault_account,
             market,
+            market_config: market_config_pda(&fixture.vault, &market),
+            oracle_update_account: fixture.oracle_update_account,
             position,
+            clock: Clock::id(),
+        }
+        .to_account_metas(None),
+    )
+}
+
+fn liquidate_instruction(fixture: &Fixture, owner: &User, market: Pubkey) -> Instruction {
+    let (position, _) = position_pda(&fixture.vault, &owner.keypair.pubkey(), &market);
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::LiquidatePosition {}.data(),
+        risk_vault::accounts::LiquidatePosition {
+            liquidator: fixture.vault_authority.pubkey(),
+            vault: fixture.vault,
+            user_vault_account: owner.user_vault_account,
+            market,
+            market_config: market_config_pda(&fixture.vault, &market),
+            oracle_update_account: fixture.oracle_update_account,
+            position,
+            owner: owner.keypair.pubkey(),
+            clock: Clock::id(),
         }
         .to_account_metas(None),
     )
@@ -883,6 +1013,18 @@ fn send_position(
     notional_delta: u64,
     collateral_delta: u64,
 ) -> bool {
+    if size_delta > 0 && notional_delta > 0 {
+        let Some(price) = (notional_delta as u128)
+            .checked_mul(risk_vault::constants::QUANTITY_SCALE as u128)
+            .and_then(|value| value.checked_div(size_delta as u128))
+            .and_then(|value| i64::try_from(value).ok())
+        else {
+            return false;
+        };
+        let now = fixture.svm.get_sysvar::<Clock>().unix_timestamp;
+        let feed_id = fixture.feed_id;
+        set_pyth_price(fixture, price, 0, -6, now, feed_id);
+    }
     let instruction = position_instruction(
         fixture,
         user,
@@ -946,6 +1088,7 @@ fn update_risk(
 
 fn funded_position_fixture() -> (Fixture, User, Pubkey) {
     let mut fixture = setup();
+    set_clock(&mut fixture.svm, 1_000_000);
     let user = create_user(&mut fixture, 1_000);
     assert!(send_deposit(&mut fixture, &user, 500));
     update_risk(
@@ -957,6 +1100,8 @@ fn funded_position_fixture() -> (Fixture, User, Pubkey) {
         1,
     );
     let market = Pubkey::new_unique();
+    let configure = initialize_market_config_instruction(&fixture, market, 30, 1_000, 100);
+    assert!(send(&mut fixture.svm, &fixture.vault_authority, configure));
     (fixture, user, market)
 }
 
@@ -987,6 +1132,76 @@ fn creates_position_and_stores_all_identity_and_accounting_fields() {
     assert_eq!(position.status, risk_vault::state::PositionStatus::Open);
     assert_eq!(position.bump, expected_bump);
     assert_eq!(user_state(&fixture, &user).locked_collateral, 100);
+}
+
+#[test]
+fn increase_rejects_stale_wrong_feed_and_wrong_owner_oracle_accounts() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    let fake_notional = position_instruction(
+        &fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        299,
+        100,
+    );
+    assert!(!send(&mut fixture.svm, &user.keypair, fake_notional));
+    let stale = position_instruction(
+        &fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    );
+    let feed_id = fixture.feed_id;
+    set_pyth_price(&mut fixture, 3_000_000, 0, -6, 999_969, feed_id);
+    assert!(!send(&mut fixture.svm, &user.keypair, stale));
+
+    let wrong_feed = [8_u8; 32];
+    set_pyth_price(&mut fixture, 3_000_000, 0, -6, 1_000_000, wrong_feed);
+    let wrong_feed_ix = position_instruction(
+        &fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    );
+    assert!(!send(&mut fixture.svm, &user.keypair, wrong_feed_ix));
+
+    set_pyth_price(&mut fixture, 3_000_000, 0, -6, 1_000_000, feed_id);
+    let valid = fixture
+        .svm
+        .get_account(&fixture.oracle_update_account)
+        .unwrap();
+    fixture
+        .svm
+        .set_account(
+            fixture.oracle_update_account,
+            Account {
+                owner: system_program::ID,
+                ..valid
+            },
+        )
+        .unwrap();
+    let wrong_owner_ix = position_instruction(
+        &fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    );
+    assert!(!send(&mut fixture.svm, &user.keypair, wrong_owner_ix));
+    assert!(fixture
+        .svm
+        .get_account(&position_pda(&fixture.vault, &user.keypair.pubkey(), &market).0)
+        .is_none());
 }
 
 #[test]
@@ -1173,6 +1388,9 @@ fn partial_reduction_releases_proportional_collateral_without_risk_state() {
             + 1,
         ..clock
     });
+    let now = fixture.svm.get_sysvar::<Clock>().unix_timestamp;
+    let feed_id = fixture.feed_id;
+    set_pyth_price(&mut fixture, 3_000_000, 0, -6, now, feed_id);
     assert!(send_reduction(&mut fixture, &user, market, 50, 150));
     let position = position_state(&fixture, &user.keypair.pubkey(), &market);
     assert_eq!(position.size, 50);
@@ -1233,6 +1451,123 @@ fn close_zeroes_position_and_releases_all_collateral_under_critical_risk() {
 }
 
 #[test]
+fn loss_making_close_quarantines_collateral_without_settling_pnl() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    let feed_id = fixture.feed_id;
+    set_pyth_price(&mut fixture, 100_000_000, 0, -8, 1_000_000, feed_id);
+    assert!(send_close(&mut fixture, &user, market));
+
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(position.bad_debt, 100);
+    let account = user_state(&fixture, &user);
+    assert_eq!(account.locked_collateral, 0);
+    assert_eq!(account.settlement_reserved, 100);
+    assert_eq!(vault_state(&fixture).total_deposits, 500);
+}
+
+#[test]
+fn permissionless_liquidation_quarantines_collateral_and_records_bad_debt() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+
+    // $1 price versus $3 entry creates a diagnostic loss of 200 quote atoms.
+    // This path never settles the loss against vault deposits or user shares.
+    let mut clock = fixture.svm.get_sysvar::<Clock>();
+    clock.unix_timestamp += risk_vault::constants::MAX_RISK_STATE_AGE_SECONDS + 1;
+    fixture.svm.set_sysvar(&clock);
+    let feed_id = fixture.feed_id;
+    set_pyth_price(
+        &mut fixture,
+        100_000_000,
+        500,
+        -8,
+        clock.unix_timestamp,
+        feed_id,
+    );
+    let instruction = liquidate_instruction(&fixture, &user, market);
+    assert!(send(
+        &mut fixture.svm,
+        &fixture.vault_authority,
+        instruction
+    ));
+
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(position.size, 0);
+    assert_eq!(position.notional, 0);
+    assert_eq!(position.collateral_locked, 0);
+    assert_eq!(position.bad_debt, 100);
+    let user_state = user_state(&fixture, &user);
+    assert_eq!(user_state.locked_collateral, 0);
+    assert_eq!(user_state.settlement_reserved, 100);
+    assert_eq!(vault_state(&fixture).total_deposits, 500);
+    assert_eq!(user_state.shares, 500);
+    assert!(!send_withdraw(
+        &mut fixture,
+        &user.keypair,
+        user.keypair.pubkey(),
+        user.user_vault_account,
+        user.token_account,
+        450,
+    ));
+    let second_liquidation = liquidate_instruction(&fixture, &user, market);
+    assert!(!send(
+        &mut fixture.svm,
+        &fixture.vault_authority,
+        second_liquidation,
+    ));
+}
+
+#[test]
+fn healthy_or_stale_price_position_cannot_be_liquidated() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    let healthy = liquidate_instruction(&fixture, &user, market);
+    assert!(!send(&mut fixture.svm, &fixture.vault_authority, healthy));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market).status,
+        risk_vault::state::PositionStatus::Open
+    );
+
+    let mut clock = fixture.svm.get_sysvar::<Clock>();
+    clock.unix_timestamp += 31;
+    fixture.svm.set_sysvar(&clock);
+    let stale = liquidate_instruction(&fixture, &user, market);
+    assert!(!send(&mut fixture.svm, &fixture.vault_authority, stale));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market).status,
+        risk_vault::state::PositionStatus::Open
+    );
+    assert_eq!(user_state(&fixture, &user).settlement_reserved, 0);
+}
+
+#[test]
 fn unauthorized_user_cannot_modify_another_users_position() {
     let (mut fixture, user, market) = funded_position_fixture();
     let other = create_user(&mut fixture, 1_000);
@@ -1249,7 +1584,7 @@ fn unauthorized_user_cannot_modify_another_users_position() {
     let before = position_state(&fixture, &user.keypair.pubkey(), &market);
     let mut malicious = reduce_instruction(&fixture, &other, market, 50, 50);
     let (position, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
-    malicious.accounts[4].pubkey = position;
+    malicious.accounts[6].pubkey = position;
     assert!(!send(&mut fixture.svm, &other.keypair, malicious));
     assert_eq!(
         position_state(&fixture, &user.keypair.pubkey(), &market),

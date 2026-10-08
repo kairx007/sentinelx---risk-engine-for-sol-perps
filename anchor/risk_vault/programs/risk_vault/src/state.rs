@@ -18,6 +18,23 @@ pub struct UserVaultAccount {
     pub vault: Pubkey,
     pub shares: u64,
     pub locked_collateral: u64,
+    /// Collateral quarantined by valuation-only liquidation. No PnL is settled.
+    pub settlement_reserved: u64,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct MarketConfig {
+    pub authority: Pubkey,
+    pub vault: Pubkey,
+    pub market: Pubkey,
+    pub oracle_update_account: Pubkey,
+    pub feed_id: [u8; 32],
+    pub maintenance_margin_bps: u16,
+    pub max_confidence_bps: u16,
+    pub max_age_seconds: i64,
+    pub version: u8,
     pub bump: u8,
 }
 
@@ -42,7 +59,12 @@ pub struct Position {
     pub side: PositionSide,
     pub size: u64,
     pub notional: u64,
+    /// Weighted average entry price, quote atoms per whole base unit at PRICE_SCALE.
+    pub entry_price: u64,
     pub collateral_locked: u64,
+    /// Diagnostic only. Never charged to other users or vault shares.
+    pub bad_debt: u64,
+    pub schema_version: u8,
     pub opened_at: i64,
     pub status: PositionStatus,
     pub bump: u8,

@@ -33,6 +33,7 @@ pub fn handle_initialize_user_vault_account(
     user_vault_account.vault = ctx.accounts.vault.key();
     user_vault_account.shares = 0;
     user_vault_account.locked_collateral = 0;
+    user_vault_account.settlement_reserved = 0;
     user_vault_account.bump = ctx.bumps.user_vault_account;
     Ok(())
 }

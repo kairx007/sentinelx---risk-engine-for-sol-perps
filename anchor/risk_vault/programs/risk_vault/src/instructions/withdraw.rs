@@ -76,6 +76,9 @@ pub fn handle_withdraw(ctx: Context<WithdrawAccounts>, shares: u64) -> Result<()
     )?
     .checked_sub(ctx.accounts.user_vault_account.locked_collateral)
     .ok_or(VaultError::InconsistentAccounting)?;
+    let free_collateral = free_collateral
+        .checked_sub(ctx.accounts.user_vault_account.settlement_reserved)
+        .ok_or(VaultError::InconsistentAccounting)?;
     require!(
         amount <= free_collateral,
         VaultError::InsufficientFreeCollateral
