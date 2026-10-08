@@ -786,3 +786,473 @@ fn critical_risk_update_does_not_change_shares_or_disable_withdrawals() {
     ));
     assert_eq!(vault_state(&fixture).total_deposits, 0);
 }
+
+fn position_pda(vault: &Pubkey, owner: &Pubkey, market: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            risk_vault::constants::POSITION_SEED,
+            vault.as_ref(),
+            owner.as_ref(),
+            market.as_ref(),
+        ],
+        &risk_vault::id(),
+    )
+}
+
+fn position_instruction(
+    fixture: &Fixture,
+    user: &User,
+    market: Pubkey,
+    side: risk_vault::state::PositionSide,
+    size_delta: u64,
+    notional_delta: u64,
+    collateral_delta: u64,
+) -> Instruction {
+    let (position, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::IncreasePosition {
+            side,
+            size_delta,
+            notional_delta,
+            collateral_delta,
+        }
+        .data(),
+        risk_vault::accounts::IncreasePosition {
+            owner: user.keypair.pubkey(),
+            vault: fixture.vault,
+            user_vault_account: user.user_vault_account,
+            risk_state: risk_state_pda(&fixture.vault),
+            market,
+            position,
+            clock: Clock::id(),
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    )
+}
+
+fn reduce_instruction(
+    fixture: &Fixture,
+    user: &User,
+    market: Pubkey,
+    size_delta: u64,
+    notional_delta: u64,
+) -> Instruction {
+    let (position, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::ReducePosition {
+            size_delta,
+            notional_delta,
+        }
+        .data(),
+        risk_vault::accounts::ReducePosition {
+            owner: user.keypair.pubkey(),
+            vault: fixture.vault,
+            user_vault_account: user.user_vault_account,
+            market,
+            position,
+        }
+        .to_account_metas(None),
+    )
+}
+
+fn close_instruction(fixture: &Fixture, user: &User, market: Pubkey) -> Instruction {
+    let (position, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    Instruction::new_with_bytes(
+        risk_vault::id(),
+        &risk_vault::instruction::ClosePosition {}.data(),
+        risk_vault::accounts::ClosePosition {
+            owner: user.keypair.pubkey(),
+            vault: fixture.vault,
+            user_vault_account: user.user_vault_account,
+            market,
+            position,
+        }
+        .to_account_metas(None),
+    )
+}
+
+fn send_position(
+    fixture: &mut Fixture,
+    user: &User,
+    market: Pubkey,
+    side: risk_vault::state::PositionSide,
+    size_delta: u64,
+    notional_delta: u64,
+    collateral_delta: u64,
+) -> bool {
+    let instruction = position_instruction(
+        fixture,
+        user,
+        market,
+        side,
+        size_delta,
+        notional_delta,
+        collateral_delta,
+    );
+    send(&mut fixture.svm, &user.keypair, instruction)
+}
+
+fn send_reduction(
+    fixture: &mut Fixture,
+    user: &User,
+    market: Pubkey,
+    size_delta: u64,
+    notional_delta: u64,
+) -> bool {
+    let instruction = reduce_instruction(fixture, user, market, size_delta, notional_delta);
+    send(&mut fixture.svm, &user.keypair, instruction)
+}
+
+fn send_close(fixture: &mut Fixture, user: &User, market: Pubkey) -> bool {
+    let instruction = close_instruction(fixture, user, market);
+    send(&mut fixture.svm, &user.keypair, instruction)
+}
+
+fn position_state(
+    fixture: &Fixture,
+    owner: &Pubkey,
+    market: &Pubkey,
+) -> risk_vault::state::Position {
+    let (address, _) = position_pda(&fixture.vault, owner, market);
+    let account = fixture.svm.get_account(&address).unwrap();
+    let mut data: &[u8] = &account.data;
+    risk_vault::state::Position::try_deserialize(&mut data).unwrap()
+}
+
+fn update_risk(
+    fixture: &mut Fixture,
+    level: risk_vault::state::RiskLevel,
+    score: u8,
+    contagion: risk_vault::state::ContagionState,
+    cap: u16,
+    nonce: u64,
+) {
+    let clock = fixture.svm.get_sysvar::<Clock>();
+    fixture.svm.set_sysvar(&clock);
+    let update = risk_update_instruction(
+        fixture,
+        level,
+        score,
+        contagion,
+        cap,
+        clock.unix_timestamp,
+        nonce,
+    );
+    assert!(send(&mut fixture.svm, &fixture.risk_authority, update));
+}
+
+fn funded_position_fixture() -> (Fixture, User, Pubkey) {
+    let mut fixture = setup();
+    let user = create_user(&mut fixture, 1_000);
+    assert!(send_deposit(&mut fixture, &user, 500));
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::Low,
+        15,
+        risk_vault::state::ContagionState::None,
+        300,
+        1,
+    );
+    let market = Pubkey::new_unique();
+    (fixture, user, market)
+}
+
+#[test]
+fn creates_position_and_stores_all_identity_and_accounting_fields() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100
+    ));
+
+    let (expected_address, expected_bump) =
+        position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(fixture.svm.get_account(&expected_address).is_some(), true);
+    assert_eq!(position.owner, user.keypair.pubkey());
+    assert_eq!(position.vault, fixture.vault);
+    assert_eq!(position.market, market);
+    assert_eq!(position.side, risk_vault::state::PositionSide::Long);
+    assert_eq!(position.size, 100);
+    assert_eq!(position.notional, 300);
+    assert_eq!(position.collateral_locked, 100);
+    assert_eq!(position.status, risk_vault::state::PositionStatus::Open);
+    assert_eq!(position.bump, expected_bump);
+    assert_eq!(user_state(&fixture, &user).locked_collateral, 100);
+}
+
+#[test]
+fn leverage_boundary_allows_three_x_and_rejects_above_it_atomically() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100
+    ));
+    let before = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        1,
+        1,
+        0
+    ));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market),
+        before
+    );
+}
+
+#[test]
+fn configured_cap_overrides_low_risk_cap() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::Low,
+        15,
+        risk_vault::state::ContagionState::None,
+        200,
+        2,
+    );
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        201,
+        100
+    ));
+    assert!(fixture
+        .svm
+        .get_account(&position_pda(&fixture.vault, &user.keypair.pubkey(), &market).0)
+        .is_none());
+}
+
+#[test]
+fn medium_high_and_critical_risk_caps_are_enforced() {
+    for (level, score, cap, notional, allowed) in [
+        (risk_vault::state::RiskLevel::Medium, 35, 200, 200, true),
+        (risk_vault::state::RiskLevel::High, 60, 100, 101, false),
+        (risk_vault::state::RiskLevel::Critical, 90, 0, 1, false),
+    ] {
+        let (mut fixture, user, market) = funded_position_fixture();
+        update_risk(
+            &mut fixture,
+            level,
+            score,
+            risk_vault::state::ContagionState::None,
+            cap,
+            2,
+        );
+        let result = send_position(
+            &mut fixture,
+            &user,
+            market,
+            risk_vault::state::PositionSide::Long,
+            100,
+            notional,
+            100,
+        );
+        assert_eq!(result, allowed);
+    }
+}
+
+#[test]
+fn contagion_developing_caps_at_one_x_and_active_blocks_increases() {
+    for (contagion, notional, allowed) in [
+        (risk_vault::state::ContagionState::Developing, 100, true),
+        (risk_vault::state::ContagionState::Developing, 101, false),
+        (risk_vault::state::ContagionState::Active, 1, false),
+    ] {
+        let (mut fixture, user, market) = funded_position_fixture();
+        update_risk(
+            &mut fixture,
+            risk_vault::state::RiskLevel::Low,
+            15,
+            contagion,
+            risk_vault::policy::effective_policy_cap(risk_vault::state::RiskLevel::Low, contagion),
+            2,
+        );
+        assert_eq!(
+            send_position(
+                &mut fixture,
+                &user,
+                market,
+                risk_vault::state::PositionSide::Long,
+                100,
+                notional,
+                100,
+            ),
+            allowed
+        );
+    }
+}
+
+#[test]
+fn zero_values_cross_side_and_duplicate_market_are_rejected() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        0,
+        100,
+        100
+    ));
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        100
+    ));
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Short,
+        1,
+        1,
+        1
+    ));
+}
+
+#[test]
+fn insufficient_free_collateral_does_not_create_or_mutate_position() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        501
+    ));
+    assert_eq!(user_state(&fixture, &user).locked_collateral, 0);
+    assert!(fixture
+        .svm
+        .get_account(&position_pda(&fixture.vault, &user.keypair.pubkey(), &market).0)
+        .is_none());
+}
+
+#[test]
+fn partial_reduction_releases_proportional_collateral_without_risk_state() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100
+    ));
+    let clock = fixture.svm.get_sysvar::<Clock>();
+    fixture.svm.set_sysvar(&Clock {
+        unix_timestamp: clock.unix_timestamp
+            + risk_vault::constants::MAX_RISK_STATE_AGE_SECONDS
+            + 1,
+        ..clock
+    });
+    assert!(send_reduction(&mut fixture, &user, market, 50, 150));
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.size, 50);
+    assert_eq!(position.notional, 150);
+    assert_eq!(position.collateral_locked, 50);
+    assert_eq!(user_state(&fixture, &user).locked_collateral, 50);
+}
+
+#[test]
+fn over_reduction_and_zero_reduction_are_atomic() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        100
+    ));
+    let before = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert!(!send_reduction(&mut fixture, &user, market, 101, 101));
+    assert!(!send_reduction(&mut fixture, &user, market, 0, 0));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market),
+        before
+    );
+}
+
+#[test]
+fn close_zeroes_position_and_releases_all_collateral_under_critical_risk() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        100
+    ));
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::Critical,
+        90,
+        risk_vault::state::ContagionState::Active,
+        0,
+        2,
+    );
+    assert!(send_close(&mut fixture, &user, market));
+    let position = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(position.size, 0);
+    assert_eq!(position.notional, 0);
+    assert_eq!(position.collateral_locked, 0);
+    assert_eq!(position.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(user_state(&fixture, &user).locked_collateral, 0);
+    assert!(!send_close(&mut fixture, &user, market));
+}
+
+#[test]
+fn unauthorized_user_cannot_modify_another_users_position() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    let other = create_user(&mut fixture, 1_000);
+    assert!(send_deposit(&mut fixture, &other, 500));
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        100
+    ));
+    let before = position_state(&fixture, &user.keypair.pubkey(), &market);
+    let mut malicious = reduce_instruction(&fixture, &other, market, 50, 50);
+    let (position, _) = position_pda(&fixture.vault, &user.keypair.pubkey(), &market);
+    malicious.accounts[4].pubkey = position;
+    assert!(!send(&mut fixture.svm, &other.keypair, malicious));
+    assert_eq!(
+        position_state(&fixture, &user.keypair.pubkey(), &market),
+        before
+    );
+}

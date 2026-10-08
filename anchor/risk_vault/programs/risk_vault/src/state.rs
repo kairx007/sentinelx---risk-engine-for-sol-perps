@@ -34,7 +34,7 @@ pub enum PositionStatus {
 }
 
 #[account]
-#[derive(InitSpace)]
+#[derive(Debug, InitSpace, PartialEq, Eq)]
 pub struct Position {
     pub owner: Pubkey,
     pub vault: Pubkey,
