@@ -10,15 +10,19 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:unit": "vitest run packages",
-    "test:integration": "vitest run apps tests",
+    "check": "bun run typecheck && bun run test:unit && bun run test:integration",
+    "test:unit": "bun x vitest run packages",
+    "test:integration": "bun x vitest run tests apps/api/tests apps/risk-publisher/tests",
+    "test:dashboard": "bun run --cwd apps/dashboard vitest run",
     "test:anchor": "cd anchor/risk_vault && cargo test --workspace --all-targets",
     "test:all": "bun run test:unit && bun run test:integration && bun run test:anchor",
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dashboard:dev": "bun run --cwd apps/dashboard dev",
+    "dashboard:build": "bun run --cwd apps/dashboard build",
+    "dashboard:typecheck": "bun run --cwd apps/dashboard typecheck"
   },
   "devDependencies": {
     "@perps-risk/cross-venue": "workspace:*",

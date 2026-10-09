@@ -82,6 +82,7 @@ export function normalizePhoenixMarketSnapshot(
     throw new Error("Phoenix returned an invalid funding period");
   }
   const observedAt = timestamp(snapshot.stats.timestamp_ms);
+  const canonicalSymbol = `${baseAsset(snapshot.market.symbol)}-PERP`;
   const totalOpenInterest = openInterestBase(snapshot);
   const bids = snapshot.orderbook.bids;
   const asks = snapshot.orderbook.asks;
@@ -90,7 +91,7 @@ export function normalizePhoenixMarketSnapshot(
   const state: MarketState = {
     market: {
       venue: "phoenix",
-      symbol: snapshot.market.symbol,
+      symbol: canonicalSymbol,
       marketId: String(snapshot.market.assetId),
       baseAsset: baseAsset(snapshot.market.symbol),
       // Phoenix perp markets settle in the exchange's canonical USDC quote asset.

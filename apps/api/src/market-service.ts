@@ -20,6 +20,14 @@ import { ApiError } from "./errors.js";
 
 export type ApiVenue = "velocity" | "phoenix";
 
+// Perpetual prices quoted in dollar-pegged assets are compared in nominal USD.
+const usdQuotedAssets = new Set(["USD", "USDC", "USDT"]);
+
+function comparableQuoteAsset(asset: string): string {
+  const quote = asset.trim().toUpperCase();
+  return usdQuotedAssets.has(quote) ? "USD" : quote;
+}
+
 export interface MarketStateReader {
   getMarketState(symbol: string): Promise<MarketState>;
 }
@@ -179,8 +187,8 @@ export function createMarketService(
       venues[1]!.state !== null &&
       venues[0]!.state.market.baseAsset.trim().toUpperCase() ===
         venues[1]!.state.market.baseAsset.trim().toUpperCase() &&
-      venues[0]!.state.market.quoteAsset.trim().toUpperCase() ===
-        venues[1]!.state.market.quoteAsset.trim().toUpperCase();
+      comparableQuoteAsset(venues[0]!.state.market.quoteAsset) ===
+        comparableQuoteAsset(venues[1]!.state.market.quoteAsset);
     const statesFresh = bothAvailable && sameMarket;
     let ecosystem: EcosystemRisk | null = null;
     let contagion: ContagionRisk | null = null;

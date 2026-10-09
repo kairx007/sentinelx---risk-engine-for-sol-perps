@@ -1,0 +1,3013 @@
+{
+  "address": "33fMx1DC1XXdSYXG8VUFqH5y1gDqxmEpbTTwESx21Rtq",
+  "metadata": {
+    "name": "risk_vault",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "close_position",
+      "discriminator": [
+        123,
+        134,
+        81,
+        0,
+        49,
+        68,
+        98,
+        98
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "user_vault_account",
+            "position"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account",
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "relations": [
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "market_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_update_account"
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "discriminator": [
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "user_vault_account"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account"
+          ]
+        },
+        {
+          "name": "collateral_mint",
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "vault_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "increase_position",
+      "discriminator": [
+        253,
+        234,
+        128,
+        104,
+        192,
+        188,
+        45,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "user_vault_account"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account",
+            "market_config"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "relations": [
+            "market_config"
+          ]
+        },
+        {
+          "name": "market_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_update_account"
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "side",
+          "type": {
+            "defined": {
+              "name": "PositionSide"
+            }
+          }
+        },
+        {
+          "name": "size_delta",
+          "type": "u64"
+        },
+        {
+          "name": "notional_delta",
+          "type": "u64"
+        },
+        {
+          "name": "collateral_delta",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_market_config",
+      "discriminator": [
+        5,
+        94,
+        211,
+        203,
+        75,
+        239,
+        159,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_mint"
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "oracle_update_account"
+        },
+        {
+          "name": "market_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "arg",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market",
+          "type": "pubkey"
+        },
+        {
+          "name": "feed_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "maintenance_margin_bps",
+          "type": "u16"
+        },
+        {
+          "name": "max_confidence_bps",
+          "type": "u16"
+        },
+        {
+          "name": "max_age_seconds",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_user_vault_account",
+      "discriminator": [
+        10,
+        106,
+        178,
+        52,
+        164,
+        91,
+        108,
+        69
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_vault",
+      "discriminator": [
+        48,
+        191,
+        163,
+        44,
+        71,
+        129,
+        63,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collateral_mint"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "risk_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_position",
+      "discriminator": [
+        187,
+        74,
+        229,
+        149,
+        102,
+        81,
+        221,
+        68
+      ],
+      "accounts": [
+        {
+          "name": "liquidator",
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account",
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "user_vault_account.owner",
+                "account": "UserVaultAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "relations": [
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "market_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_update_account"
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "user_vault_account.owner",
+                "account": "UserVaultAccount"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "relations": [
+            "position"
+          ]
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reduce_position",
+      "discriminator": [
+        96,
+        202,
+        33,
+        80,
+        24,
+        197,
+        33,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "user_vault_account",
+            "position"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account",
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "relations": [
+            "market_config",
+            "position"
+          ]
+        },
+        {
+          "name": "market_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_update_account"
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "size_delta",
+          "type": "u64"
+        },
+        {
+          "name": "notional_delta",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "rotate_risk_authority",
+      "discriminator": [
+        253,
+        161,
+        29,
+        27,
+        214,
+        135,
+        237,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_risk_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_market_config",
+      "discriminator": [
+        91,
+        87,
+        149,
+        101,
+        110,
+        116,
+        16,
+        120
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "market_config"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          },
+          "relations": [
+            "market_config"
+          ]
+        },
+        {
+          "name": "market_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "market_config.market",
+                "account": "MarketConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_update_account"
+        }
+      ],
+      "args": [
+        {
+          "name": "feed_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "maintenance_margin_bps",
+          "type": "u16"
+        },
+        {
+          "name": "max_confidence_bps",
+          "type": "u16"
+        },
+        {
+          "name": "max_age_seconds",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_risk_state",
+      "discriminator": [
+        71,
+        227,
+        24,
+        202,
+        12,
+        22,
+        17,
+        96
+      ],
+      "accounts": [
+        {
+          "name": "risk_authority",
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.collateral_mint",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "risk_level",
+          "type": {
+            "defined": {
+              "name": "RiskLevel"
+            }
+          }
+        },
+        {
+          "name": "risk_score",
+          "type": "u8"
+        },
+        {
+          "name": "contagion_state",
+          "type": {
+            "defined": {
+              "name": "ContagionState"
+            }
+          }
+        },
+        {
+          "name": "max_leverage_x100",
+          "type": "u16"
+        },
+        {
+          "name": "observed_at",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "user_vault_account"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ]
+          },
+          "relations": [
+            "user_vault_account"
+          ]
+        },
+        {
+          "name": "collateral_mint",
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "user_vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "collateral_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "shares",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "MarketConfig",
+      "discriminator": [
+        119,
+        255,
+        200,
+        88,
+        252,
+        82,
+        128,
+        24
+      ]
+    },
+    {
+      "name": "Position",
+      "discriminator": [
+        170,
+        188,
+        143,
+        228,
+        122,
+        64,
+        247,
+        208
+      ]
+    },
+    {
+      "name": "RiskState",
+      "discriminator": [
+        120,
+        33,
+        58,
+        236,
+        210,
+        191,
+        106,
+        97
+      ]
+    },
+    {
+      "name": "UserVaultAccount",
+      "discriminator": [
+        218,
+        203,
+        238,
+        239,
+        140,
+        59,
+        186,
+        198
+      ]
+    },
+    {
+      "name": "Vault",
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Deposit",
+      "discriminator": [
+        62,
+        205,
+        242,
+        175,
+        244,
+        169,
+        136,
+        52
+      ]
+    },
+    {
+      "name": "MarketConfigInitialized",
+      "discriminator": [
+        215,
+        170,
+        151,
+        136,
+        30,
+        87,
+        38,
+        101
+      ]
+    },
+    {
+      "name": "MarketConfigUpdated",
+      "discriminator": [
+        7,
+        181,
+        49,
+        237,
+        18,
+        92,
+        160,
+        192
+      ]
+    },
+    {
+      "name": "PositionClosed",
+      "discriminator": [
+        157,
+        163,
+        227,
+        228,
+        13,
+        97,
+        138,
+        121
+      ]
+    },
+    {
+      "name": "PositionIncreased",
+      "discriminator": [
+        73,
+        58,
+        247,
+        181,
+        100,
+        237,
+        249,
+        81
+      ]
+    },
+    {
+      "name": "PositionLiquidated",
+      "discriminator": [
+        40,
+        107,
+        90,
+        214,
+        96,
+        30,
+        61,
+        128
+      ]
+    },
+    {
+      "name": "PositionReduced",
+      "discriminator": [
+        251,
+        198,
+        158,
+        1,
+        128,
+        208,
+        153,
+        2
+      ]
+    },
+    {
+      "name": "RiskAuthorityRotated",
+      "discriminator": [
+        221,
+        37,
+        94,
+        39,
+        48,
+        76,
+        158,
+        244
+      ]
+    },
+    {
+      "name": "RiskStateUpdated",
+      "discriminator": [
+        88,
+        98,
+        82,
+        13,
+        246,
+        246,
+        90,
+        166
+      ]
+    },
+    {
+      "name": "VaultInitialized",
+      "discriminator": [
+        180,
+        43,
+        207,
+        2,
+        18,
+        71,
+        3,
+        75
+      ]
+    },
+    {
+      "name": "Withdraw",
+      "discriminator": [
+        192,
+        241,
+        201,
+        217,
+        70,
+        150,
+        90,
+        247
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ZeroAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "ZeroShares",
+      "msg": "Share amount must be greater than zero"
+    },
+    {
+      "code": 6002,
+      "name": "InconsistentAccounting",
+      "msg": "Vault deposit and share totals are inconsistent"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientVaultCollateral",
+      "msg": "Vault token balance is below recorded deposits"
+    },
+    {
+      "code": 6004,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6005,
+      "name": "ConversionOverflow",
+      "msg": "Calculated value does not fit in the account type"
+    },
+    {
+      "code": 6006,
+      "name": "DepositTooSmall",
+      "msg": "Deposit is too small to mint a share"
+    },
+    {
+      "code": 6007,
+      "name": "WithdrawalTooSmall",
+      "msg": "Withdrawal is too small to transfer collateral"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientUserShares",
+      "msg": "Withdrawal exceeds the user's share balance"
+    },
+    {
+      "code": 6009,
+      "name": "UnauthorizedRiskAuthority",
+      "msg": "Signer is not the configured risk authority"
+    },
+    {
+      "code": 6010,
+      "name": "UnauthorizedVaultAuthority",
+      "msg": "Signer is not the Vault authority"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidRiskScore",
+      "msg": "Risk score must be between zero and one hundred"
+    },
+    {
+      "code": 6012,
+      "name": "RiskLevelScoreMismatch",
+      "msg": "Risk level does not match the supplied score"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidRiskPolicy",
+      "msg": "Risk policy exceeds the on-chain leverage cap"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidNonce",
+      "msg": "Risk update nonce is not the exact next sequence"
+    },
+    {
+      "code": 6015,
+      "name": "NonceExhausted",
+      "msg": "Risk update nonce has been exhausted"
+    },
+    {
+      "code": 6016,
+      "name": "StaleRiskUpdate",
+      "msg": "Risk update is older than the allowed age"
+    },
+    {
+      "code": 6017,
+      "name": "FutureRiskTimestamp",
+      "msg": "Risk update timestamp is too far in the future"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidRiskTimestamp",
+      "msg": "Risk update timestamp is invalid"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidRiskAuthority",
+      "msg": "Risk authority cannot be the default public key"
+    },
+    {
+      "code": 6020,
+      "name": "RiskStateNotInitialized",
+      "msg": "Risk state has not been initialized"
+    },
+    {
+      "code": 6021,
+      "name": "RiskStateStale",
+      "msg": "Risk state is stale and blocks new exposure"
+    },
+    {
+      "code": 6022,
+      "name": "ExposureIncreaseBlocked",
+      "msg": "Action would increase exposure beyond the configured policy"
+    },
+    {
+      "code": 6023,
+      "name": "LeverageLimitExceeded",
+      "msg": "Requested leverage exceeds the effective risk cap"
+    },
+    {
+      "code": 6024,
+      "name": "ReductionOnlyMode",
+      "msg": "Risk policy is in reduction-only mode"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidMarket",
+      "msg": "Position market is invalid"
+    },
+    {
+      "code": 6026,
+      "name": "InvalidPosition",
+      "msg": "Position is invalid"
+    },
+    {
+      "code": 6027,
+      "name": "PositionNotOpen",
+      "msg": "Position is not open"
+    },
+    {
+      "code": 6028,
+      "name": "PositionAlreadyClosed",
+      "msg": "Position is already closed"
+    },
+    {
+      "code": 6029,
+      "name": "InvalidReduction",
+      "msg": "Position reduction is invalid"
+    },
+    {
+      "code": 6030,
+      "name": "InsufficientFreeCollateral",
+      "msg": "Insufficient free collateral"
+    },
+    {
+      "code": 6031,
+      "name": "ZeroCollateral",
+      "msg": "Position collateral cannot be zero"
+    },
+    {
+      "code": 6032,
+      "name": "PositionSideMismatch",
+      "msg": "Position side does not match the existing position"
+    },
+    {
+      "code": 6033,
+      "name": "InvalidPrice",
+      "msg": "Position price or notional is invalid"
+    },
+    {
+      "code": 6034,
+      "name": "CollateralReleaseTooSmall",
+      "msg": "Collateral release is too small"
+    },
+    {
+      "code": 6035,
+      "name": "InvalidOracleAccount",
+      "msg": "Oracle account does not match the configured market"
+    },
+    {
+      "code": 6036,
+      "name": "WrongOracleFeed",
+      "msg": "Oracle feed does not match the configured market"
+    },
+    {
+      "code": 6037,
+      "name": "InvalidOraclePrice",
+      "msg": "Oracle price is invalid"
+    },
+    {
+      "code": 6038,
+      "name": "InvalidOracleConfidence",
+      "msg": "Oracle confidence exceeds the configured limit"
+    },
+    {
+      "code": 6039,
+      "name": "StaleOraclePrice",
+      "msg": "Oracle price is stale"
+    },
+    {
+      "code": 6040,
+      "name": "FutureOraclePrice",
+      "msg": "Oracle timestamp is in the future"
+    },
+    {
+      "code": 6041,
+      "name": "UnsupportedPriceExponent",
+      "msg": "Oracle exponent is unsupported"
+    },
+    {
+      "code": 6042,
+      "name": "PriceOutOfRange",
+      "msg": "Normalized oracle price is out of range"
+    },
+    {
+      "code": 6043,
+      "name": "InvalidMarketConfig",
+      "msg": "Market configuration is invalid"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidMarginConfig",
+      "msg": "Margin configuration is invalid"
+    },
+    {
+      "code": 6045,
+      "name": "PositionHealthy",
+      "msg": "Position is healthy and cannot be liquidated"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidPositionVersion",
+      "msg": "Position account schema version is unsupported"
+    },
+    {
+      "code": 6047,
+      "name": "InsufficientInitialMargin",
+      "msg": "Position collateral is below the required initial margin"
+    }
+  ],
+  "types": [
+    {
+      "name": "ContagionState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Isolated"
+          },
+          {
+            "name": "Developing"
+          },
+          {
+            "name": "Active"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Deposit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_update_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "maintenance_margin_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_confidence_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_age_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketConfigInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_update_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "maintenance_margin_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_confidence_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_age_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_update_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "maintenance_margin_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_confidence_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_age_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Position",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "PositionSide"
+              }
+            }
+          },
+          {
+            "name": "size",
+            "type": "u64"
+          },
+          {
+            "name": "notional",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "docs": [
+              "Weighted average entry price, quote atoms per whole base unit at PRICE_SCALE."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "collateral_locked",
+            "type": "u64"
+          },
+          {
+            "name": "bad_debt",
+            "docs": [
+              "Diagnostic only. Never charged to other users or vault shares."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "schema_version",
+            "type": "u8"
+          },
+          {
+            "name": "opened_at",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "PositionStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "PositionSide"
+              }
+            }
+          },
+          {
+            "name": "collateral_released",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_reserved",
+            "type": "u64"
+          },
+          {
+            "name": "diagnostic_pnl",
+            "type": "i128"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "publish_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionIncreased",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "PositionSide"
+              }
+            }
+          },
+          {
+            "name": "resulting_size",
+            "type": "u64"
+          },
+          {
+            "name": "resulting_exposure",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_locked",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "type": "u64"
+          },
+          {
+            "name": "current_price",
+            "type": "u64"
+          },
+          {
+            "name": "publish_time",
+            "type": "i64"
+          },
+          {
+            "name": "risk_nonce",
+            "type": "u64"
+          },
+          {
+            "name": "config_version",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionLiquidated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "liquidator",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "PositionSide"
+              }
+            }
+          },
+          {
+            "name": "size",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "publish_time",
+            "type": "i64"
+          },
+          {
+            "name": "unrealized_pnl",
+            "type": "i128"
+          },
+          {
+            "name": "equity",
+            "type": "i128"
+          },
+          {
+            "name": "maintenance_margin",
+            "type": "u64"
+          },
+          {
+            "name": "bad_debt",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_reserved",
+            "type": "u64"
+          },
+          {
+            "name": "config_version",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionReduced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "PositionSide"
+              }
+            }
+          },
+          {
+            "name": "resulting_size",
+            "type": "u64"
+          },
+          {
+            "name": "resulting_exposure",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_locked",
+            "type": "u64"
+          },
+          {
+            "name": "diagnostic_pnl",
+            "type": "i128"
+          },
+          {
+            "name": "collateral_reserved",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "publish_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionSide",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Long"
+          },
+          {
+            "name": "Short"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceFeedMessage",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "feed_id",
+            "docs": [
+              "`FeedId` but avoid the type alias because of compatibility issues with Anchor's `idl-build` feature."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "price",
+            "type": "i64"
+          },
+          {
+            "name": "conf",
+            "type": "u64"
+          },
+          {
+            "name": "exponent",
+            "type": "i32"
+          },
+          {
+            "name": "publish_time",
+            "docs": [
+              "The timestamp of this price update in seconds"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "prev_publish_time",
+            "docs": [
+              "The timestamp of the previous price update. This field is intended to allow users to",
+              "identify the single unique price update for any moment in time:",
+              "for any time t, the unique update is the one such that prev_publish_time < t <= publish_time.",
+              "",
+              "Note that there may not be such an update while we are migrating to the new message-sending logic,",
+              "as some price updates on pythnet may not be sent to other chains (because the message-sending",
+              "logic may not have triggered). We can solve this problem by making the message-sending mandatory",
+              "(which we can do once publishers have migrated over).",
+              "",
+              "Additionally, this field may be equal to publish_time if the message is sent on a slot where",
+              "where the aggregation was unsuccesful. This problem will go away once all publishers have",
+              "migrated over to a recent version of pyth-agent."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "ema_price",
+            "type": "i64"
+          },
+          {
+            "name": "ema_conf",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceUpdateV2",
+      "docs": [
+        "A price update account. This account is used by the Pyth Receiver program to store a verified price update from a Pyth price feed.",
+        "It contains:",
+        "- `write_authority`: The write authority for this account. This authority can close this account to reclaim rent or update the account to contain a different price update.",
+        "- `verification_level`: The [`VerificationLevel`] of this price update. This represents how many Wormhole guardian signatures have been verified for this price update.",
+        "- `price_message`: The actual price update.",
+        "- `posted_slot`: The slot at which this price update was posted."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "write_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "verification_level",
+            "type": {
+              "defined": {
+                "name": "VerificationLevel"
+              }
+            }
+          },
+          {
+            "name": "price_message",
+            "type": {
+              "defined": {
+                "name": "PriceFeedMessage"
+              }
+            }
+          },
+          {
+            "name": "posted_slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RiskAuthorityRotated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_risk_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_risk_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RiskLevel",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Low"
+          },
+          {
+            "name": "Medium"
+          },
+          {
+            "name": "High"
+          },
+          {
+            "name": "Critical"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RiskState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "risk_level",
+            "type": {
+              "defined": {
+                "name": "RiskLevel"
+              }
+            }
+          },
+          {
+            "name": "risk_score",
+            "type": "u8"
+          },
+          {
+            "name": "contagion_state",
+            "type": {
+              "defined": {
+                "name": "ContagionState"
+              }
+            }
+          },
+          {
+            "name": "max_leverage_x100",
+            "type": "u16"
+          },
+          {
+            "name": "observed_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RiskStateUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "risk_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "risk_level",
+            "type": {
+              "defined": {
+                "name": "RiskLevel"
+              }
+            }
+          },
+          {
+            "name": "risk_score",
+            "type": "u8"
+          },
+          {
+            "name": "contagion_state",
+            "type": {
+              "defined": {
+                "name": "ContagionState"
+              }
+            }
+          },
+          {
+            "name": "max_leverage_x100",
+            "type": "u16"
+          },
+          {
+            "name": "observed_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserVaultAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          },
+          {
+            "name": "locked_collateral",
+            "type": "u64"
+          },
+          {
+            "name": "settlement_reserved",
+            "docs": [
+              "Collateral quarantined by valuation-only liquidation. No PnL is settled."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "risk_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_deposits",
+            "type": "u64"
+          },
+          {
+            "name": "total_shares",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "risk_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VerificationLevel",
+      "docs": [
+        "Pyth price updates are bridged to all blockchains via Wormhole.",
+        "Using the price updates on another chain requires verifying the signatures of the Wormhole guardians.",
+        "The usual process is to check the signatures for two thirds of the total number of guardians, but this can be cumbersome on Solana because of the transaction size limits,",
+        "so we also allow for partial verification.",
+        "",
+        "This enum represents how much a price update has been verified:",
+        "- If `Full`, we have verified the signatures for two thirds of the current guardians.",
+        "- If `Partial`, only `num_signatures` guardian signatures have been checked.",
+        "",
+        "# Warning",
+        "Using partially verified price updates is dangerous, as it lowers the threshold of guardians that need to collude to produce a malicious price update."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Partial",
+            "fields": [
+              {
+                "name": "num_signatures",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "Full"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Withdraw",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

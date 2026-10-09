@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@sentinelx/types": ["../types/src/index.ts"]

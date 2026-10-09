@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { DashboardSnapshot } from "../../../packages/api-contracts/src/dashboard";
 import { useDashboardSnapshot } from "./hooks/useDashboardSnapshot";
+import { useOnChainRiskState } from "./hooks/useOnChainRiskState";
+import { OnChainRiskState } from "./components/OnChainRiskState";
 
 type View = "Ecosystem" | "Market" | "Contagion";
 type Venue = DashboardSnapshot["venues"][number];
@@ -400,7 +402,8 @@ function PolicyPanel({ snapshot }: { snapshot: DashboardSnapshot | null }) {
         </div>
       )}
       <p className="policy-note">
-        Calculated policy output only. This is not a read of on-chain RiskState.
+        Calculated off-chain policy output. Compare with the separately verified
+        on-chain RiskState below.
       </p>
     </section>
   );
@@ -717,6 +720,7 @@ export function App() {
   const [view, setView] = useState<View>("Ecosystem");
   const [search, setSearch] = useState(false);
   const snapshotState = useDashboardSnapshot("SOL-PERP");
+  const chainSnapshot = useOnChainRiskState();
   const { data: snapshot, status, error, stale, lastUpdatedAt } = snapshotState;
   const navItems: { name: View; icon: string }[] = [
     { name: "Ecosystem", icon: "grid" },
@@ -881,6 +885,12 @@ export function App() {
               <MarketView snapshot={snapshot} />
             ) : (
               <ContagionView snapshot={snapshot} />
+            )}
+            {view === "Ecosystem" && (
+              <OnChainRiskState
+                snapshot={chainSnapshot}
+                decision={snapshot?.policy.decision ?? null}
+              />
             )}
             <footer className="footer">
               <span>

@@ -8,6 +8,13 @@ import type {
 
 const DEFAULT_STALE_AFTER_MS = 15_000;
 
+function baseSymbol(symbol: string): string {
+  return symbol
+    .trim()
+    .toUpperCase()
+    .replace(/[-/]?(PERP|USD[TC]?)$/i, "");
+}
+
 export class PhoenixAdapter {
   private readonly staleAfterMs: number;
   private readonly readerFactory: PhoenixReaderFactory;
@@ -28,11 +35,13 @@ export class PhoenixAdapter {
   async getMarketState(symbol: string) {
     const requested = symbol.trim().toUpperCase();
     if (!requested) throw new Error("Phoenix market symbol is required");
+    const requestedBase = baseSymbol(requested);
     const markets = await this.reader.getMarkets();
     const market = markets.find((candidate) => {
-      const marketSymbol = candidate.symbol.toUpperCase();
-      const base = marketSymbol.replace(/[-/]?(PERP|USD[TC]?)$/i, "");
-      return marketSymbol === requested || base === requested;
+      const isActive =
+        !candidate.marketStatus ||
+        candidate.marketStatus.toLowerCase() === "active";
+      return isActive && baseSymbol(candidate.symbol) === requestedBase;
     });
     if (!market)
       throw new Error(`Phoenix perp market not found for symbol "${symbol}"`);

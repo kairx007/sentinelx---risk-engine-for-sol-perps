@@ -55,3 +55,12 @@ button:focus-visible,a:focus-visible { outline: 2px solid #39865f; outline-offse
 .policy-card { margin-top: 14px; padding-bottom: 13px; }
 .policy-values { margin-top: 10px; }
 .policy-note { padding-top: 10px; margin: 8px 0 0; border-top: 1px solid #f0f2f0; color: #8e9992; font-size: 9px; }
+.chain-state-card { margin-top: 14px; padding-bottom: 14px; }
+.chain-explainer { margin: 9px 0 2px; color: #84908b; font-size: 10px; line-height: 1.6; }
+.chain-values { margin-top: 8px; }
+.chain-message { margin-top: 7px; color: #7f8982; }
+.chain-meta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px 16px; padding: 12px 0 0; margin: 12px 0 0; border-top: 1px solid #f0f2f0; }
+.chain-meta div { min-width: 0; }
+.chain-meta dt { margin-bottom: 4px; color: #9aa39d; font-size: 8px; text-transform: uppercase; letter-spacing: .45px; }
+.chain-meta dd { overflow: hidden; margin: 0; color: #59665e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.chain-meta-secondary { margin-top: 10px; }

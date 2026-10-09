@@ -1,0 +1,6 @@
+{
+  "name": "@perps-risk/risk-vault-client",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts"
+}
