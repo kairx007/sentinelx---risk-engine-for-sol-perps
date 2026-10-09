@@ -65,6 +65,21 @@ function formatAmount(
   return `${formatNumber(value)} ${unit}`;
 }
 
+function resolveLiquidityAmount(
+  liquidity: Venue["state"] extends infer S
+    ? S extends { liquidity: infer L }
+      ? L
+      : undefined
+    : undefined,
+): number | null {
+  if (!liquidity) return null;
+  if (liquidity.availableLiquidity != null) return liquidity.availableLiquidity;
+  if (liquidity.bidSize != null && liquidity.askSize != null) {
+    return Math.min(liquidity.bidSize, liquidity.askSize);
+  }
+  return liquidity.bidSize ?? liquidity.askSize ?? null;
+}
+
 function venueLabel(venue: string): string {
   return venue.charAt(0).toUpperCase() + venue.slice(1);
 }
@@ -137,7 +152,7 @@ function EcosystemView({
   onMarket,
 }: {
   snapshot: DashboardSnapshot | null;
-  onMarket: () => void;
+  onMarket: (venue?: string) => void;
 }) {
   const ecosystem = snapshot?.ecosystem;
   const venues = snapshot?.venues ?? [];
@@ -168,7 +183,7 @@ function EcosystemView({
               ? `${ecosystem.venueCount} venue${ecosystem.venueCount === 1 ? "" : "s"} contributed to this snapshot. Risk drivers are calculated by the backend risk engine.`
               : "Combined risk requires fresh data from both Velocity and Phoenix."}
           </p>
-          <button className="button button-primary" onClick={onMarket}>
+          <button className="button button-primary" onClick={() => onMarket()}>
             View market detail <Icon name="arrow" size={15} />
           </button>
         </div>
@@ -198,7 +213,7 @@ function EcosystemView({
           <h2>Venue risk</h2>
           <p>Market observations and per-venue risk scores.</p>
         </div>
-        <button className="text-button" onClick={onMarket}>
+        <button className="text-button" onClick={() => onMarket()}>
           View market details <Icon name="chevron" size={14} />
         </button>
       </div>
@@ -212,7 +227,7 @@ function EcosystemView({
           <span>LIQUIDATIONS</span>
         </div>
         {venues.map((item) => (
-          <VenueRow key={item.venue} item={item} onClick={onMarket} />
+          <VenueRow key={item.venue} item={item} onClick={() => onMarket(item.venue)} />
         ))}
         {venues.length === 0 && (
           <div className="empty-state">
@@ -323,7 +338,7 @@ function VenueRow({ item, onClick }: { item: Venue; onClick: () => void }) {
       </span>
       <strong>
         {formatAmount(
-          state?.liquidity.availableLiquidity,
+          resolveLiquidityAmount(state?.liquidity),
           state?.liquidity.liquidityUnit,
           state?.market.quoteAsset,
         )}
@@ -409,8 +424,19 @@ function PolicyPanel({ snapshot }: { snapshot: DashboardSnapshot | null }) {
   );
 }
 
-function MarketView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
+function MarketView({
+  snapshot,
+  selectedVenue,
+  onSelectVenue,
+}: {
+  snapshot: DashboardSnapshot | null;
+  selectedVenue?: string;
+  onSelectVenue?: (venue: string) => void;
+}) {
   const selected =
+    (selectedVenue
+      ? snapshot?.venues.find((item) => item.venue === selectedVenue)
+      : null) ??
     snapshot?.venues.find((item) => item.status === "available") ??
     snapshot?.venues[0];
   const state = selected?.state;
@@ -439,9 +465,32 @@ function MarketView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
               : "No venue data available"}
           </p>
         </div>
-        <Badge tone="neutral">
-          {selected ? venueLabel(selected.venue) : "LIVE DATA"}
-        </Badge>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {(snapshot?.venues ?? []).map((item) => (
+            <button
+              key={item.venue}
+              className={`button ${selected?.venue === item.venue ? "button-primary" : "button-secondary"}`}
+              style={{
+                padding: "8px 16px",
+                fontSize: "13px",
+                cursor: "pointer",
+                borderRadius: "6px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+              onClick={() => onSelectVenue?.(item.venue)}
+            >
+              <span className={`venue-logo logo-${item.venue.slice(0, 2)}`}>
+                {item.venue.slice(0, 2).toUpperCase()}
+              </span>
+              <span>{venueLabel(item.venue)}</span>
+              <Badge tone={venueStatusTone(item)}>
+                {venueStatusLabel(item)}
+              </Badge>
+            </button>
+          ))}
+        </div>
       </div>
       <div className="market-summary-grid">
         <section className="card market-risk-card">
@@ -464,6 +513,27 @@ function MarketView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
         </section>
         {[
           [
+            "MARK PRICE",
+            state?.price.markPrice != null
+              ? `$${formatNumber(state.price.markPrice)}`
+              : "N/A",
+          ],
+          [
+            "ORACLE PRICE",
+            state?.oracle.price != null
+              ? `$${formatNumber(state.oracle.price)}`
+              : state?.price.indexPrice != null
+                ? `$${formatNumber(state.price.indexPrice)}`
+                : "N/A",
+          ],
+          [
+            "BEST BID / ASK",
+            state?.liquidity.bestBidPrice != null &&
+            state?.liquidity.bestAskPrice != null
+              ? `$${formatNumber(state.liquidity.bestBidPrice)} / $${formatNumber(state.liquidity.bestAskPrice)}`
+              : "N/A",
+          ],
+          [
             "OPEN INTEREST",
             formatAmount(
               state?.positioning.totalOpenInterest,
@@ -480,7 +550,7 @@ function MarketView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
           [
             "AVAILABLE LIQUIDITY",
             formatAmount(
-              state?.liquidity.availableLiquidity,
+              resolveLiquidityAmount(state?.liquidity),
               state?.liquidity.liquidityUnit,
               state?.market.quoteAsset,
             ),
@@ -718,6 +788,7 @@ function ContagionView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
 
 export function App() {
   const [view, setView] = useState<View>("Ecosystem");
+  const [selectedVenue, setSelectedVenue] = useState<string>("phoenix");
   const [search, setSearch] = useState(false);
   const snapshotState = useDashboardSnapshot("SOL-PERP");
   const chainSnapshot = useOnChainRiskState();
@@ -768,9 +839,12 @@ export function App() {
         <div className="side-label markets-label">SUPPORTED VENUES</div>
         {(snapshot?.venues ?? []).map((item) => (
           <button
-            className="market-nav"
+            className={`market-nav ${view === "Market" && selectedVenue === item.venue ? "selected" : ""}`}
             key={item.venue}
-            onClick={() => setView("Market")}
+            onClick={() => {
+              setSelectedVenue(item.venue);
+              setView("Market");
+            }}
           >
             <span className={`venue-logo logo-${item.venue.slice(0, 2)}`}>
               {item.venue.slice(0, 2).toUpperCase()}
@@ -879,10 +953,17 @@ export function App() {
             {view === "Ecosystem" ? (
               <EcosystemView
                 snapshot={snapshot}
-                onMarket={() => setView("Market")}
+                onMarket={(venue) => {
+                  if (venue) setSelectedVenue(venue);
+                  setView("Market");
+                }}
               />
             ) : view === "Market" ? (
-              <MarketView snapshot={snapshot} />
+              <MarketView
+                snapshot={snapshot}
+                selectedVenue={selectedVenue}
+                onSelectVenue={setSelectedVenue}
+              />
             ) : (
               <ContagionView snapshot={snapshot} />
             )}

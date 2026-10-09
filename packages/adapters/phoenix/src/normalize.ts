@@ -88,6 +88,10 @@ export function normalizePhoenixMarketSnapshot(
   const asks = snapshot.orderbook.asks;
   const bestBid = bids[0];
   const bestAsk = asks[0];
+  const bidSize = nonnegative(bestBid?.[1]);
+  const askSize = nonnegative(bestAsk?.[1]);
+  const availableLiquidity =
+    bidSize !== null && askSize !== null ? Math.min(bidSize, askSize) : null;
   const state: MarketState = {
     market: {
       venue: "phoenix",
@@ -113,9 +117,9 @@ export function normalizePhoenixMarketSnapshot(
     liquidity: {
       bestBidPrice: positive(bestBid?.[0]),
       bestAskPrice: positive(bestAsk?.[0]),
-      bidSize: nonnegative(bestBid?.[1]),
-      askSize: nonnegative(bestAsk?.[1]),
-      availableLiquidity: null,
+      bidSize,
+      askSize,
+      availableLiquidity,
       liquidityUnit: "base",
       observedAt,
     },

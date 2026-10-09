@@ -59,7 +59,8 @@ function result(fields: Omit<ChainSnapshot, "fetchedAt">): ChainSnapshot {
 }
 
 function configFromEnvironment(): ChainConfig | null {
-  const env = import.meta.env as Record<string, string | undefined>;
+  const env = ((import.meta as { env?: Record<string, string | undefined> }).env ??
+    {}) as Record<string, string | undefined>;
   const rpcUrl = env.VITE_CHAIN_RPC_URL?.trim();
   const cluster = env.VITE_CHAIN_CLUSTER?.trim();
   const collateralMint = env.VITE_COLLATERAL_MINT?.trim();
