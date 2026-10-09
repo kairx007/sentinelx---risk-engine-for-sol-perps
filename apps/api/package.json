@@ -7,6 +7,7 @@
     "start": "bun src/index.ts"
   },
   "dependencies": {
+    "@perps-risk/api-contracts": "workspace:*",
     "@perps-risk/adapter-phoenix": "workspace:*",
     "@perps-risk/adapter-velocity": "workspace:*",
     "@perps-risk/cross-venue": "workspace:*",

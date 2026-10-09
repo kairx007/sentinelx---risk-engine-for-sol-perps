@@ -1,7 +1,11 @@
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ContagionRisk, EcosystemRisk, VenueSnapshot } from "@perps-risk/cross-venue";
+import type {
+  ContagionRisk,
+  EcosystemRisk,
+  VenueSnapshot,
+} from "@perps-risk/cross-venue";
 import type { MarketRisk } from "@perps-risk/risk";
 import { MarketStateSchema, type MarketState } from "@perps-risk/types";
 import { createApiApp } from "../src/app.js";
@@ -15,10 +19,24 @@ const marketRisk: MarketRisk = {
   timestamp: "2026-10-08T00:00:00.000Z",
 };
 
-function makeState(venue: "velocity" | "phoenix", symbol = "SOL-PERP"): MarketState {
+function makeState(
+  venue: "velocity" | "phoenix",
+  symbol = "SOL-PERP",
+): MarketState {
   return MarketStateSchema.parse({
-    market: { venue, symbol, marketId: null, baseAsset: "SOL", quoteAsset: "USDC" },
-    price: { lastPrice: 100, indexPrice: 100, markPrice: 100, observedAt: null },
+    market: {
+      venue,
+      symbol,
+      marketId: null,
+      baseAsset: "SOL",
+      quoteAsset: "USDC",
+    },
+    price: {
+      lastPrice: 100,
+      indexPrice: 100,
+      markPrice: 100,
+      observedAt: null,
+    },
     positioning: {
       longOpenInterest: null,
       shortOpenInterest: null,
@@ -84,6 +102,7 @@ describe("API", () => {
   let buildSnapshot: ReturnType<typeof vi.fn>;
   let ecosystemCalculation: ReturnType<typeof vi.fn>;
   let contagionCalculation: ReturnType<typeof vi.fn>;
+  let policyCalculation: ReturnType<typeof vi.fn>;
   let ecosystemResult: EcosystemRisk;
   let contagionResult: ContagionRisk;
   let internalErrorLog: ReturnType<typeof vi.spyOn> | undefined;
@@ -117,10 +136,20 @@ describe("API", () => {
       drivers: [],
       timestamp: "2026-10-08T00:00:00.000Z",
     };
-    ecosystemCalculation = vi.fn((_asset: string, snapshots: VenueSnapshot[]) => ({
-      ...ecosystemResult,
-      venueSnapshots: snapshots,
-    }));
+    const policyResult = {
+      riskLevel: "low" as const,
+      riskScore: 12,
+      contagionState: "NONE" as const,
+      maxLeverageX100: 300,
+      observedAt: 1_791_408_000,
+    };
+    policyCalculation = vi.fn(() => policyResult);
+    ecosystemCalculation = vi.fn(
+      (_asset: string, snapshots: VenueSnapshot[]) => ({
+        ...ecosystemResult,
+        venueSnapshots: snapshots,
+      }),
+    );
     contagionCalculation = vi.fn(() => contagionResult);
 
     const service = createMarketService({
@@ -132,6 +161,7 @@ describe("API", () => {
         buildVenueSnapshot: buildSnapshot,
         calculateEcosystemRisk: ecosystemCalculation,
         calculateContagionRisk: contagionCalculation,
+        buildRiskPolicyDecision: policyCalculation,
       },
     });
     server = createApiApp(service).listen(0);
@@ -142,7 +172,7 @@ describe("API", () => {
 
   afterEach(async () => {
     await new Promise<void>((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
+      server.close((error) => (error ? reject(error) : resolve()));
     });
     internalErrorLog?.mockRestore();
     internalErrorLog = undefined;
@@ -157,7 +187,9 @@ describe("API", () => {
   });
 
   it("rejects /markets without venue", async () => {
-    expect((await fetch(`${baseUrl}/markets?symbol=SOL-PERP`)).status).toBe(400);
+    expect((await fetch(`${baseUrl}/markets?symbol=SOL-PERP`)).status).toBe(
+      400,
+    );
   });
 
   it("rejects /markets without symbol", async () => {
@@ -165,13 +197,17 @@ describe("API", () => {
   });
 
   it("rejects unsupported API venues", async () => {
-    const response = await fetch(`${baseUrl}/markets?venue=drift&symbol=SOL-PERP`);
+    const response = await fetch(
+      `${baseUrl}/markets?venue=drift&symbol=SOL-PERP`,
+    );
     expect(response.status).toBe(400);
     expect(velocityGet).not.toHaveBeenCalled();
   });
 
   it("returns exactly one canonical state from the selected venue", async () => {
-    const response = await fetch(`${baseUrl}/markets?venue=velocity&symbol=SOL-PERP`);
+    const response = await fetch(
+      `${baseUrl}/markets?venue=velocity&symbol=SOL-PERP`,
+    );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([velocityState]);
     expect(velocityGet).toHaveBeenCalledWith("SOL-PERP");
@@ -179,7 +215,9 @@ describe("API", () => {
   });
 
   it("returns one valid canonical state for the Phoenix query endpoint", async () => {
-    const response = await fetch(`${baseUrl}/markets?venue=phoenix&symbol=SOL-PERP`);
+    const response = await fetch(
+      `${baseUrl}/markets?venue=phoenix&symbol=SOL-PERP`,
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toHaveLength(1);
@@ -206,7 +244,10 @@ describe("API", () => {
   it("fetches both venues and delegates ecosystem risk", async () => {
     const response = await fetch(`${baseUrl}/ecosystem/risk?symbol=SOL-PERP`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ asset: "SOL", venueCount: 2 });
+    expect(await response.json()).toMatchObject({
+      asset: "SOL",
+      venueCount: 2,
+    });
     expect(velocityGet).toHaveBeenCalledWith("SOL-PERP");
     expect(phoenixGet).toHaveBeenCalledWith("SOL-PERP");
     expect(buildSnapshot).toHaveBeenCalledTimes(2);
@@ -217,13 +258,125 @@ describe("API", () => {
   });
 
   it("fetches both venues and delegates contagion risk", async () => {
-    const response = await fetch(`${baseUrl}/ecosystem/contagion?symbol=SOL-PERP`);
+    const response = await fetch(
+      `${baseUrl}/ecosystem/contagion?symbol=SOL-PERP`,
+    );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(contagionResult);
     expect(contagionCalculation).toHaveBeenCalledWith("SOL", [
       makeSnapshot(velocityState),
       makeSnapshot(phoenixState),
     ]);
+  });
+
+  it("assembles a coherent snapshot with each venue collected once and stale inputs retained", async () => {
+    velocityState = MarketStateSchema.parse({
+      ...velocityState,
+      market: { ...velocityState.market, marketId: "velocity-market" },
+      metadata: {
+        ...velocityState.metadata,
+        observedAt: "2026-10-08T00:00:00.000Z",
+      },
+    });
+    phoenixState = MarketStateSchema.parse({
+      ...phoenixState,
+      market: { ...phoenixState.market, marketId: "phoenix-market" },
+      metadata: {
+        ...phoenixState.metadata,
+        observedAt: "2026-10-08T00:00:00.000Z",
+      },
+    });
+    const response = await fetch(
+      `${baseUrl}/dashboard/snapshot?symbol=SOL-PERP`,
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      source: "LIVE",
+      symbol: "SOL-PERP",
+      ecosystem: null,
+      contagion: null,
+    });
+    expect(
+      body.venues.map((venue: { venue: string; status: string }) => [
+        venue.venue,
+        venue.status,
+      ]),
+    ).toEqual([
+      ["velocity", "stale"],
+      ["phoenix", "stale"],
+    ]);
+    expect(velocityGet).toHaveBeenCalledTimes(1);
+    expect(phoenixGet).toHaveBeenCalledTimes(1);
+    expect(buildSnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it("calculates the combined snapshot and policy only from two valid fresh venues", async () => {
+    velocityState = MarketStateSchema.parse({
+      ...velocityState,
+      market: { ...velocityState.market, marketId: "velocity-market" },
+      metadata: {
+        ...velocityState.metadata,
+        observedAt: "2026-10-08T00:00:00.000Z",
+        freshness: { sourceAgeMs: 100, staleAfterMs: 15_000 },
+      },
+    });
+    phoenixState = MarketStateSchema.parse({
+      ...phoenixState,
+      market: { ...phoenixState.market, marketId: "phoenix-market" },
+      metadata: {
+        ...phoenixState.metadata,
+        observedAt: "2026-10-08T00:00:00.000Z",
+        freshness: { sourceAgeMs: 200, staleAfterMs: 15_000 },
+      },
+    });
+
+    const response = await fetch(
+      `${baseUrl}/dashboard/snapshot?symbol=SOL-PERP`,
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(
+      body.venues.map((venue: { status: string }) => venue.status),
+    ).toEqual(["available", "available"]);
+    expect(body.ecosystem).toMatchObject({ ecosystemScore: 12, venueCount: 2 });
+    expect(body.contagion).toEqual(contagionResult);
+    expect(body.policy).toMatchObject({
+      status: "available",
+      decision: { riskScore: 12 },
+    });
+    expect(policyCalculation).toHaveBeenCalledWith(
+      expect.objectContaining({ ecosystemScore: 12 }),
+      "NONE",
+    );
+    expect(velocityGet).toHaveBeenCalledTimes(1);
+    expect(phoenixGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps one available venue when the other feed fails and disables combined calculations", async () => {
+    velocityState = MarketStateSchema.parse({
+      ...velocityState,
+      market: { ...velocityState.market, marketId: "velocity-market" },
+      metadata: {
+        ...velocityState.metadata,
+        observedAt: "2026-10-08T00:00:00.000Z",
+        freshness: { sourceAgeMs: 100, staleAfterMs: 15_000 },
+      },
+    });
+    phoenixGet.mockRejectedValueOnce(new Error("RPC unavailable"));
+    const response = await fetch(
+      `${baseUrl}/dashboard/snapshot?symbol=SOL-PERP`,
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(
+      body.venues.map((venue: { status: string }) => venue.status),
+    ).toEqual(["available", "unavailable"]);
+    expect(body.ecosystem).toBeNull();
+    expect(body.contagion).toBeNull();
+    expect(body.policy.status).toBe("unavailable");
+    expect(ecosystemCalculation).not.toHaveBeenCalled();
+    expect(contagionCalculation).not.toHaveBeenCalled();
   });
 
   it("preserves null optional metrics", async () => {
@@ -236,22 +389,28 @@ describe("API", () => {
     velocityGet.mockRejectedValueOnce(new Error("RPC unavailable"));
     const response = await fetch(`${baseUrl}/ecosystem/risk?symbol=SOL-PERP`);
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ error: { code: "VENUE_UNAVAILABLE" } });
+    expect(await response.json()).toMatchObject({
+      error: { code: "VENUE_UNAVAILABLE" },
+    });
     expect(buildSnapshot).not.toHaveBeenCalled();
   });
 
   it("returns 404 when a market is not found", async () => {
-    velocityGet.mockRejectedValueOnce(new Error('Velocity perp market not found for symbol "NOPE"'));
+    velocityGet.mockRejectedValueOnce(
+      new Error('Velocity perp market not found for symbol "NOPE"'),
+    );
     const response = await fetch(`${baseUrl}/markets/velocity/NOPE`);
     expect(response.status).toBe(404);
-    expect(await response.json()).toMatchObject({ error: { code: "MARKET_NOT_FOUND" } });
+    expect(await response.json()).toMatchObject({
+      error: { code: "MARKET_NOT_FOUND" },
+    });
   });
 
   it("returns a safe 500 response for unexpected calculation errors", async () => {
     buildSnapshot.mockImplementationOnce(() => {
       throw new Error("private internal detail");
     });
-    internalErrorLog = vi.spyOn(console, "error").mockImplementation(() => { });
+    internalErrorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const response = await fetch(`${baseUrl}/markets/velocity/SOL-PERP/risk`);
     expect(response.status).toBe(500);
     const body = await response.json();

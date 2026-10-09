@@ -1,0 +1,10 @@
+{
+  "name": "@perps-risk/api-contracts",
+  "private": true,
+  "type": "module",
+  "exports": "./src/dashboard.ts",
+  "dependencies": {
+    "@perps-risk/types": "workspace:*",
+    "zod": "^3.25.0"
+  }
+}

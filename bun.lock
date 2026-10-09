@@ -20,6 +20,7 @@
     "apps/api": {
       "name": "@perps-risk/api",
       "dependencies": {
+        "@perps-risk/api-contracts": "workspace:*",
         "@perps-risk/adapter-phoenix": "workspace:*",
         "@perps-risk/adapter-velocity": "workspace:*",
         "@perps-risk/cross-venue": "workspace:*",
@@ -86,6 +87,13 @@
       },
       "devDependencies": {
         "vitest": "^3.2.0",
+      },
+    },
+    "packages/api-contracts": {
+      "name": "@perps-risk/api-contracts",
+      "dependencies": {
+        "@perps-risk/types": "workspace:*",
+        "zod": "^3.25.0",
       },
     },
     "packages/metrics": {

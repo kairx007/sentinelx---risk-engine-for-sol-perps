@@ -1,5 +1,11 @@
-import express, { type ErrorRequestHandler, type Express, type Request, type Response } from "express";
+import express, {
+  type ErrorRequestHandler,
+  type Express,
+  type Request,
+  type Response,
+} from "express";
 import { ApiError } from "./errors.js";
+import { DashboardSnapshotSchema } from "../../../packages/api-contracts/src/dashboard.js";
 import {
   createDefaultMarketService,
   type ApiVenue,
@@ -10,14 +16,22 @@ const supportedVenues = new Set<ApiVenue>(["velocity", "phoenix"]);
 
 function requiredQuery(value: unknown, name: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new ApiError(400, "INVALID_REQUEST", `Query parameter "${name}" is required.`);
+    throw new ApiError(
+      400,
+      "INVALID_REQUEST",
+      `Query parameter "${name}" is required.`,
+    );
   }
   return value.trim();
 }
 
 function parseVenue(value: string): ApiVenue {
   if (!supportedVenues.has(value as ApiVenue)) {
-    throw new ApiError(400, "INVALID_REQUEST", "Venue must be velocity or phoenix.");
+    throw new ApiError(
+      400,
+      "INVALID_REQUEST",
+      "Venue must be velocity or phoenix.",
+    );
   }
   return value as ApiVenue;
 }
@@ -26,7 +40,11 @@ function pathParams(request: Request): { venue: ApiVenue; symbol: string } {
   const venueValue = request.params.venue;
   const symbolValue = request.params.symbol;
   if (typeof venueValue !== "string" || typeof symbolValue !== "string") {
-    throw new ApiError(400, "INVALID_REQUEST", "Venue and market symbol are required.");
+    throw new ApiError(
+      400,
+      "INVALID_REQUEST",
+      "Venue and market symbol are required.",
+    );
   }
   const venue = parseVenue(venueValue);
   const symbol = symbolValue.trim();
@@ -36,13 +54,20 @@ function pathParams(request: Request): { venue: ApiVenue; symbol: string } {
   return { venue, symbol };
 }
 
-function sendError(response: Response, status: number, code: string, message: string): void {
+function sendError(
+  response: Response,
+  status: number,
+  code: string,
+  message: string,
+): void {
   response.status(status).json({
     error: { code, message, timestamp: new Date().toISOString() },
   });
 }
 
-export function createApiApp(service: MarketService = createDefaultMarketService()): Express {
+export function createApiApp(
+  service: MarketService = createDefaultMarketService(),
+): Express {
   const app = express();
 
   app.get("/health", (_request, response) => {
@@ -75,11 +100,22 @@ export function createApiApp(service: MarketService = createDefaultMarketService
     response.json(await service.getContagionRisk(symbol));
   });
 
+  app.get("/dashboard/snapshot", async (request, response) => {
+    const symbol = requiredQuery(request.query.symbol, "symbol");
+    const snapshot = await service.getDashboardSnapshot(symbol);
+    response.json(DashboardSnapshotSchema.parse(snapshot));
+  });
+
   app.use((_request, response) => {
     sendError(response, 404, "NOT_FOUND", "Route not found.");
   });
 
-  const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
+  const errorHandler: ErrorRequestHandler = (
+    error,
+    _request,
+    response,
+    next,
+  ) => {
     if (response.headersSent) {
       next(error);
       return;
