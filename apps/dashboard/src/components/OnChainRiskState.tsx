@@ -87,6 +87,34 @@ export function OnChainRiskState({
             <strong>{formatDate(state.updatedAt)}</strong>
           </div>
         </div>
+      ) : decision ? (
+        <div className="chain-pending-state">
+          <div className="empty-state compact chain-message" role="status">
+            {snapshot.status === "not_found"
+              ? "On-chain accounts not yet initialized on devnet. Displaying pending off-chain policy ready for publication."
+              : (snapshot.error ?? "Awaiting on-chain account publication.")}
+          </div>
+          <div className="chain-values" style={{ opacity: 0.9, marginTop: "12px" }}>
+            <div className="metric-line">
+              <span>Policy risk level / score</span>
+              <strong>
+                {decision.riskLevel.toUpperCase()} · {decision.riskScore}/100
+              </strong>
+            </div>
+            <div className="metric-line">
+              <span>Contagion state</span>
+              <strong>{decision.contagionState}</strong>
+            </div>
+            <div className="metric-line">
+              <span>Max leverage cap</span>
+              <strong>{(decision.maxLeverageX100 / 100).toFixed(2)}×</strong>
+            </div>
+            <div className="metric-line">
+              <span>Publication status</span>
+              <strong>PENDING RISK PUBLISHER</strong>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="empty-state compact chain-message" role="status">
           {snapshot.error ?? "On-chain RiskState is unavailable."}

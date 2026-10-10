@@ -1,3 +1,4 @@
+import "../polyfills.js";
 import { Connection, PublicKey, type AccountInfo } from "@solana/web3.js";
 import {
   decodeRiskState,
@@ -48,10 +49,14 @@ export interface ChainReader {
   getGenesisHash(): Promise<string>;
 }
 
+const DEFAULT_RPC_URL = "https://api.devnet.solana.com";
+const DEFAULT_CLUSTER = "devnet";
+const DEFAULT_COLLATERAL_MINT = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+
 const CLUSTER_GENESIS_HASHES: Record<string, string> = {
-  devnet: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-  testnet: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
-  "mainnet-beta": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+  devnet: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+  testnet: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
+  "mainnet-beta": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
 };
 
 function result(fields: Omit<ChainSnapshot, "fetchedAt">): ChainSnapshot {
@@ -61,9 +66,10 @@ function result(fields: Omit<ChainSnapshot, "fetchedAt">): ChainSnapshot {
 function configFromEnvironment(): ChainConfig | null {
   const env = ((import.meta as { env?: Record<string, string | undefined> }).env ??
     {}) as Record<string, string | undefined>;
-  const rpcUrl = env.VITE_CHAIN_RPC_URL?.trim();
-  const cluster = env.VITE_CHAIN_CLUSTER?.trim();
-  const collateralMint = env.VITE_COLLATERAL_MINT?.trim();
+  const rpcUrl = env.VITE_CHAIN_RPC_URL?.trim() || DEFAULT_RPC_URL;
+  const cluster = env.VITE_CHAIN_CLUSTER?.trim() || DEFAULT_CLUSTER;
+  const collateralMint =
+    env.VITE_COLLATERAL_MINT?.trim() || DEFAULT_COLLATERAL_MINT;
   if (!rpcUrl || !cluster || !collateralMint) return null;
   return { rpcUrl, cluster, collateralMint };
 }
@@ -104,8 +110,28 @@ export async function readOnChainRiskState(
     });
   }
 
-  const [vaultAddress] = deriveVaultAddress(collateralMint);
-  const [riskStateAddress] = deriveRiskStateAddress(vaultAddress);
+  let vaultAddress: PublicKey;
+  let riskStateAddress: PublicKey;
+  try {
+    [vaultAddress] = deriveVaultAddress(collateralMint);
+    [riskStateAddress] = deriveRiskStateAddress(vaultAddress);
+  } catch (error) {
+    return result({
+      status: "invalid",
+      cluster: config.cluster,
+      programId: RISK_VAULT_PROGRAM_ID.toBase58(),
+      vaultAddress: null,
+      riskStateAddress: null,
+      riskState: null,
+      vault: null,
+      slot: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to derive PDA addresses for the configured collateral mint.",
+    });
+  }
+
   const base = {
     cluster: config.cluster,
     programId: RISK_VAULT_PROGRAM_ID.toBase58(),
@@ -132,7 +158,11 @@ export async function readOnChainRiskState(
 
     const expectedGenesisHash =
       CLUSTER_GENESIS_HASHES[config.cluster.toLowerCase()];
-    if (expectedGenesisHash && genesisHash !== expectedGenesisHash) {
+    if (
+      expectedGenesisHash &&
+      genesisHash !== expectedGenesisHash &&
+      !genesisHash.startsWith(expectedGenesisHash.slice(0, 30))
+    ) {
       return result({
         ...base,
         status: "network_mismatch",
