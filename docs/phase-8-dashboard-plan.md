@@ -511,12 +511,12 @@ Add an opt-in endpoint such as `GET /demo/dashboard/snapshot?scenario=LOW`, disa
 
 Define plausible Velocity/Phoenix `MarketState` fixture pairs using current schemas and existing fixtures. Do not add schema fields, hardcode a final score, or choose absurd values. These are calibration targets, not forced outputs:
 
-| Scenario | Fixture characteristics | Target calculated result |
-|---|---|---|
-| LOW | Healthy liquidity, normal funding, moderate OI, low liquidation pressure and low venue divergence | LOW policy, normally 3x; contagion NONE or ISOLATED |
-| MEDIUM | Increased OI concentration, worsening funding, some liquidity degradation, moderate liquidations/divergence | MEDIUM policy, normally 2x |
-| HIGH | High OI, elevated funding, reduced liquidity, increased liquidation pressure and significant divergence | HIGH policy, normally 1x; calibrate DEVELOPING contagion |
-| CRITICAL | Severe liquidity deterioration, extreme funding, high liquidation pressure and major divergence | CRITICAL policy, 0x; calibrate ACTIVE contagion |
+| Scenario | Fixture characteristics                                                                                     | Target calculated result                                 |
+| -------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| LOW      | Healthy liquidity, normal funding, moderate OI, low liquidation pressure and low venue divergence           | LOW policy, normally 3x; contagion NONE or ISOLATED      |
+| MEDIUM   | Increased OI concentration, worsening funding, some liquidity degradation, moderate liquidations/divergence | MEDIUM policy, normally 2x                               |
+| HIGH     | High OI, elevated funding, reduced liquidity, increased liquidation pressure and significant divergence     | HIGH policy, normally 1x; calibrate DEVELOPING contagion |
+| CRITICAL | Severe liquidity deterioration, extreme funding, high liquidation pressure and major divergence             | CRITICAL policy, 0x; calibrate ACTIVE contagion          |
 
 Scenario details must derive claims from fixture fields and actual calculated results. Where metrics are null, show unavailable or omit the claim. Stable-output determinism checks exclude wall-clock timestamps or inject a test clock.
 

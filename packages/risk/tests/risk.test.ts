@@ -247,7 +247,9 @@ describe("liquidity risk", () => {
     const metrics = calculateLiquidityMetrics(state);
     const result = calculateLiquidityRisk(state, metrics, new Date(NOW));
     expect(result.score).toBeGreaterThan(30);
-    expect(result.drivers.some((d) => d.includes("Widening spread"))).toBe(true);
+    expect(result.drivers.some((d) => d.includes("Widening spread"))).toBe(
+      true,
+    );
   });
 
   it("returns high score for low effective liquidity", () => {
@@ -257,9 +259,9 @@ describe("liquidity risk", () => {
     const metrics = calculateLiquidityMetrics(state);
     const result = calculateLiquidityRisk(state, metrics, new Date(NOW));
     expect(result.score).toBeGreaterThan(30);
-    expect(result.drivers.some((d) => d.includes("Low effective liquidity"))).toBe(
-      true,
-    );
+    expect(
+      result.drivers.some((d) => d.includes("Low effective liquidity")),
+    ).toBe(true);
   });
 
   it("flags slippage risk when price impact is within depth", () => {
@@ -285,7 +287,12 @@ describe("liquidation risk", () => {
     state.liquidation.shortVolume = null;
     const liqMetrics = calculateLiquidationMetrics(state);
     const oiMetrics = calculateOpenInterestMetrics(state, []);
-    const result = calculateLiquidationRisk(state, liqMetrics, oiMetrics, new Date(NOW));
+    const result = calculateLiquidationRisk(
+      state,
+      liqMetrics,
+      oiMetrics,
+      new Date(NOW),
+    );
     expect(result.score).toBeLessThan(30);
   });
 
@@ -299,9 +306,16 @@ describe("liquidation risk", () => {
     state.positioning.openInterestUnit = "base";
     const liqMetrics = calculateLiquidationMetrics(state);
     const oiMetrics = calculateOpenInterestMetrics(state, []);
-    const result = calculateLiquidationRisk(state, liqMetrics, oiMetrics, new Date(NOW));
+    const result = calculateLiquidationRisk(
+      state,
+      liqMetrics,
+      oiMetrics,
+      new Date(NOW),
+    );
     expect(result.score).toBeGreaterThan(30);
-    expect(result.drivers.some((d) => d.includes("% of open interest"))).toBe(true);
+    expect(result.drivers.some((d) => d.includes("% of open interest"))).toBe(
+      true,
+    );
   });
 
   it("detects liquidation concentration", () => {
@@ -314,7 +328,12 @@ describe("liquidation risk", () => {
     state.positioning.openInterestUnit = "base";
     const liqMetrics = calculateLiquidationMetrics(state);
     const oiMetrics = calculateOpenInterestMetrics(state, []);
-    const result = calculateLiquidationRisk(state, liqMetrics, oiMetrics, new Date(NOW));
+    const result = calculateLiquidationRisk(
+      state,
+      liqMetrics,
+      oiMetrics,
+      new Date(NOW),
+    );
     expect(result.drivers.some((d) => d.includes("concentration"))).toBe(true);
   });
 });
@@ -408,7 +427,11 @@ describe("volatility risk", () => {
     ];
     states.forEach((s) => (s.price.markPrice = 152.4));
     const metrics = calculateVolatilityMetrics(states, 120);
-    const result = calculateVolatilityRisk(states.at(-1)!, metrics, new Date(NOW));
+    const result = calculateVolatilityRisk(
+      states.at(-1)!,
+      metrics,
+      new Date(NOW),
+    );
     expect(result.score).toBeLessThan(20);
   });
 
@@ -426,11 +449,15 @@ describe("volatility risk", () => {
       states[i]!.price.markPrice = price;
     });
     const metrics = calculateVolatilityMetrics(states, 300);
-    const result = calculateVolatilityRisk(states.at(-1)!, metrics, new Date(NOW));
-    expect(result.score).toBeGreaterThan(30);
-    expect(result.drivers.some((d) => d.includes("High realized volatility"))).toBe(
-      true,
+    const result = calculateVolatilityRisk(
+      states.at(-1)!,
+      metrics,
+      new Date(NOW),
     );
+    expect(result.score).toBeGreaterThan(30);
+    expect(
+      result.drivers.some((d) => d.includes("High realized volatility")),
+    ).toBe(true);
   });
 
   it("flags sharp price movements", () => {
@@ -443,8 +470,14 @@ describe("volatility risk", () => {
     states[1]!.price.markPrice = 105;
     states[2]!.price.markPrice = 120;
     const metrics = calculateVolatilityMetrics(states, 120);
-    const result = calculateVolatilityRisk(states.at(-1)!, metrics, new Date(NOW));
-    expect(result.drivers.some((d) => d.includes("Sharp price movement"))).toBe(true);
+    const result = calculateVolatilityRisk(
+      states.at(-1)!,
+      metrics,
+      new Date(NOW),
+    );
+    expect(result.drivers.some((d) => d.includes("Sharp price movement"))).toBe(
+      true,
+    );
   });
 });
 
@@ -458,7 +491,10 @@ function buildMetrics(state: MarketState, history: MarketState[] = []) {
     funding: calculateFundingMetrics(state, history),
     liquidation: calculateLiquidationMetrics(state),
     oracle: calculateOracleMetrics(state, new Date(NOW)),
-    volatility: calculateVolatilityMetrics(history.length > 0 ? history : [state], 120),
+    volatility: calculateVolatilityMetrics(
+      history.length > 0 ? history : [state],
+      120,
+    ),
   };
 }
 

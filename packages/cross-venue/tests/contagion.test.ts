@@ -38,8 +38,16 @@ function makeSnapshot(
 describe("calculateContagionRisk", () => {
   it("returns NONE when both venues are normal", () => {
     const snapshots = [
-      makeSnapshot("velocity", "low", 12, { price: 120, spread: 0.01, oi: null }),
-      makeSnapshot("phoenix", "low", 15, { price: 120.1, spread: 0.015, oi: null }),
+      makeSnapshot("velocity", "low", 12, {
+        price: 120,
+        spread: 0.01,
+        oi: null,
+      }),
+      makeSnapshot("phoenix", "low", 15, {
+        price: 120.1,
+        spread: 0.015,
+        oi: null,
+      }),
     ];
 
     const result = calculateContagionRisk("SOL", snapshots);
@@ -119,15 +127,25 @@ describe("calculateContagionRisk", () => {
 
   it("returns ACTIVE when both venues are stressed", () => {
     const snapshots = [
-      makeSnapshot("velocity", "high", 72, { price: 120, spread: 0.4, oi: 18000 }),
-      makeSnapshot("phoenix", "critical", 85, { price: 135, spread: 0.8, oi: 22000 }),
+      makeSnapshot("velocity", "high", 72, {
+        price: 120,
+        spread: 0.4,
+        oi: 18000,
+      }),
+      makeSnapshot("phoenix", "critical", 85, {
+        price: 135,
+        spread: 0.8,
+        oi: 22000,
+      }),
     ];
 
     const result = calculateContagionRisk("SOL", snapshots);
 
     expect(result.status).toBe("ACTIVE");
     expect(result.severity).toMatch(/^(high|critical)$/);
-    expect(result.affectedVenues).toEqual(expect.arrayContaining(["velocity", "phoenix"]));
+    expect(result.affectedVenues).toEqual(
+      expect.arrayContaining(["velocity", "phoenix"]),
+    );
   });
 
   it("returns ACTIVE when one venue is stressed and two divergence signals are material", () => {
@@ -174,8 +192,16 @@ describe("calculateContagionRisk", () => {
 
   it("returns NONE for aligned markets", () => {
     const snapshots = [
-      makeSnapshot("velocity", "low", 12, { price: 120, spread: 0.01, oi: null }),
-      makeSnapshot("phoenix", "low", 14, { price: 120.05, spread: 0.012, oi: null }),
+      makeSnapshot("velocity", "low", 12, {
+        price: 120,
+        spread: 0.01,
+        oi: null,
+      }),
+      makeSnapshot("phoenix", "low", 14, {
+        price: 120.05,
+        spread: 0.012,
+        oi: null,
+      }),
     ];
 
     const result = calculateContagionRisk("SOL", snapshots);

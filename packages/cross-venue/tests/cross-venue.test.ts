@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { CrossVenueRisk, EcosystemRisk, VenueSnapshot } from "../src/types.js";
-import { calculateCrossVenueRisk, calculateEcosystemRisk } from "../src/risk.js";
+import type {
+  CrossVenueRisk,
+  EcosystemRisk,
+  VenueSnapshot,
+} from "../src/types.js";
+import {
+  calculateCrossVenueRisk,
+  calculateEcosystemRisk,
+} from "../src/risk.js";
 
 function venue(
   venue: VenueSnapshot["venue"],
@@ -12,7 +19,8 @@ function venue(
 ): VenueSnapshot {
   // Convert annualized percent back to per-period rate for the snapshot
   const SECONDS_PER_YEAR = 365.25 * 24 * 3600;
-  const rate = (annualizedFundingPct / 100) * (fundingPeriodSeconds / SECONDS_PER_YEAR);
+  const rate =
+    (annualizedFundingPct / 100) * (fundingPeriodSeconds / SECONDS_PER_YEAR);
 
   return {
     venue,

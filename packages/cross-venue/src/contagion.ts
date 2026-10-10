@@ -76,10 +76,16 @@ export function calculateContagionRisk(
 
   const ecosystem = calculateCrossVenueRisk(asset, sorted);
   const stressedVenues = sorted
-    .filter((snapshot) => snapshot.risk !== null && ["high", "critical"].includes(snapshot.risk.level))
+    .filter(
+      (snapshot) =>
+        snapshot.risk !== null &&
+        ["high", "critical"].includes(snapshot.risk.level),
+    )
     .map((snapshot) => snapshot.venue);
   const mediumVenues = sorted
-    .filter((snapshot) => snapshot.risk !== null && snapshot.risk.level === "medium")
+    .filter(
+      (snapshot) => snapshot.risk !== null && snapshot.risk.level === "medium",
+    )
     .map((snapshot) => snapshot.venue);
 
   const materialSignals = [
@@ -125,7 +131,10 @@ export function calculateContagionRisk(
     status = "ACTIVE";
   } else if (stressedCount === 1 && materialSignalCount >= 2) {
     status = "ACTIVE";
-  } else if (stressedCount === 1 && (mediumVenues.length > 0 || materialSignalCount >= 1)) {
+  } else if (
+    stressedCount === 1 &&
+    (mediumVenues.length > 0 || materialSignalCount >= 1)
+  ) {
     status = "DEVELOPING";
   } else if (stressedCount === 1) {
     status = "ISOLATED";
@@ -135,23 +144,30 @@ export function calculateContagionRisk(
     0,
     ...sorted.map((snapshot) => snapshot.risk?.overallScore ?? 0),
   );
-  const severity = deriveSeverity(status, maxVenueScore, ecosystem.ecosystemScore);
+  const severity = deriveSeverity(
+    status,
+    maxVenueScore,
+    ecosystem.ecosystemScore,
+  );
 
   const affectedVenues: Venue[] =
     status === "NONE"
       ? []
       : sorted
-        .filter((snapshot) => {
-          const level = snapshot.risk?.level ?? "low";
-          if (["high", "critical"].includes(level)) return true;
-          if (status === "DEVELOPING" && level === "medium") return true;
-          return false;
-        })
-        .map((snapshot) => snapshot.venue);
+          .filter((snapshot) => {
+            const level = snapshot.risk?.level ?? "low";
+            if (["high", "critical"].includes(level)) return true;
+            if (status === "DEVELOPING" && level === "medium") return true;
+            return false;
+          })
+          .map((snapshot) => snapshot.venue);
 
   const drivers = buildDrivers(
     ecosystem.riskDrivers.filter(
-      (driver) => !driver.includes("Insufficient") && !driver.includes("Single venue") && !driver.includes("No venue data"),
+      (driver) =>
+        !driver.includes("Insufficient") &&
+        !driver.includes("Single venue") &&
+        !driver.includes("No venue data"),
     ),
     stressedVenues,
     mediumVenues,

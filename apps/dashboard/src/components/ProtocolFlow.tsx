@@ -13,7 +13,10 @@ export function ProtocolFlow({
   const venues = snapshot?.venues ?? [];
 
   return (
-    <section className="card protocol-flow-card" aria-label="End-to-end protocol flow">
+    <section
+      className="card protocol-flow-card"
+      aria-label="End-to-end protocol flow"
+    >
       <div className="card-title">
         <div>
           <span className="mini-icon orange">🔄</span>
@@ -23,7 +26,9 @@ export function ProtocolFlow({
       </div>
 
       <p className="flow-explainer">
-        Real-time telemetry pipeline: telemetry is collected off-chain, signed by an authenticated risk publisher, and verified on-chain to restrict position leverage.
+        Real-time telemetry pipeline: telemetry is collected off-chain, signed
+        by an authenticated risk publisher, and verified on-chain to restrict
+        position leverage.
       </p>
 
       <div className="flow-diagram-container">
@@ -31,10 +36,16 @@ export function ProtocolFlow({
         <div className="flow-step-node">
           <div className="flow-node-badge">1. TELEMETRY</div>
           <h4>Multi-Venue Ingestion</h4>
-          <p>Velocity & Phoenix perpetual markets stream orderbook depth, spreads, funding rates, and volume.</p>
+          <p>
+            Velocity & Phoenix perpetual markets stream orderbook depth,
+            spreads, funding rates, and volume.
+          </p>
           <div className="flow-pill-row">
             {venues.map((v) => (
-              <span key={v.venue} className={`venue-tag ${v.status === "available" ? "active" : ""}`}>
+              <span
+                key={v.venue}
+                className={`venue-tag ${v.status === "available" ? "active" : ""}`}
+              >
                 {v.venue.toUpperCase()}
               </span>
             ))}
@@ -47,10 +58,17 @@ export function ProtocolFlow({
         <div className="flow-step-node">
           <div className="flow-node-badge">2. SYSTEMIC ENGINE</div>
           <h4>Divergence & Policy</h4>
-          <p>HHI concentration, price disparity, and contagion models compute the maximum risk score.</p>
+          <p>
+            HHI concentration, price disparity, and contagion models compute the
+            maximum risk score.
+          </p>
           <div className="flow-stat-box">
-            <span>Score:</span> <strong>{policy ? `${policy.riskScore}/100` : "—"}</strong>
-            <span>Cap:</span> <strong>{policy ? `${(policy.maxLeverageX100 / 100).toFixed(2)}×` : "—"}</strong>
+            <span>Score:</span>{" "}
+            <strong>{policy ? `${policy.riskScore}/100` : "—"}</strong>
+            <span>Cap:</span>{" "}
+            <strong>
+              {policy ? `${(policy.maxLeverageX100 / 100).toFixed(2)}×` : "—"}
+            </strong>
           </div>
         </div>
 
@@ -60,9 +78,13 @@ export function ProtocolFlow({
         <div className="flow-step-node">
           <div className="flow-node-badge">3. PUBLISHER</div>
           <h4>Authenticated Commit</h4>
-          <p>Dedicated authority signs <code>update_risk_state</code> transactions with monotonic nonces.</p>
+          <p>
+            Dedicated authority signs <code>update_risk_state</code>{" "}
+            transactions with monotonic nonces.
+          </p>
           <div className="flow-stat-box">
-            <span>Status:</span> <strong>{onChainState ? "ACTIVE" : "AWAITING"}</strong>
+            <span>Status:</span>{" "}
+            <strong>{onChainState ? "ACTIVE" : "AWAITING"}</strong>
           </div>
         </div>
 
@@ -72,9 +94,19 @@ export function ProtocolFlow({
         <div className="flow-step-node highlighted">
           <div className="flow-node-badge">4. SOLANA ANCHOR</div>
           <h4>Contract Enforcement</h4>
-          <p>The <code>risk_vault</code> program verifies the RiskState PDA before any user position increases.</p>
+          <p>
+            The <code>risk_vault</code> program verifies the RiskState PDA
+            before any user position increases.
+          </p>
           <div className="flow-stat-box">
-            <span>Enforced Cap:</span> <strong>{onChainState ? `${(onChainState.maxLeverageX100 / 100).toFixed(2)}×` : policy ? `${(policy.maxLeverageX100 / 100).toFixed(2)}×` : "—"}</strong>
+            <span>Enforced Cap:</span>{" "}
+            <strong>
+              {onChainState
+                ? `${(onChainState.maxLeverageX100 / 100).toFixed(2)}×`
+                : policy
+                  ? `${(policy.maxLeverageX100 / 100).toFixed(2)}×`
+                  : "—"}
+            </strong>
           </div>
         </div>
       </div>

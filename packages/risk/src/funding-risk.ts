@@ -30,15 +30,15 @@ export function calculateFundingRisk(
   }
 
   const rateTable = fundingThresholds.fundingRate;
-  const absRate = metrics.currentFunding !== null
-    ? Math.abs(metrics.currentFunding)
-    : null;
+  const absRate =
+    metrics.currentFunding !== null ? Math.abs(metrics.currentFunding) : null;
   if (absRate !== null && rateTable) {
     const rateScore = scoreFromThresholds(absRate, rateTable);
     if (rateScore !== null) {
       scores.push(rateScore);
       if (rateScore >= 50) {
-        const direction = metrics.currentFunding! >= 0 ? "positive" : "negative";
+        const direction =
+          metrics.currentFunding! >= 0 ? "positive" : "negative";
         drivers.push(
           `Extreme ${direction} funding rate (${(metrics.currentFunding! * 100).toFixed(4)}%)`,
         );
@@ -63,7 +63,10 @@ export function calculateFundingRisk(
 
   const percentileTable = fundingThresholds.fundingPercentile;
   if (metrics.percentile !== null && percentileTable) {
-    const percentileScore = scoreFromThresholds(metrics.percentile, percentileTable);
+    const percentileScore = scoreFromThresholds(
+      metrics.percentile,
+      percentileTable,
+    );
     if (percentileScore !== null) {
       scores.push(percentileScore);
       if (percentileScore >= 70) {
@@ -75,12 +78,17 @@ export function calculateFundingRisk(
   }
 
   if (metrics.currentFunding === null) {
-    return { score: 0, level: "low", drivers: ["Funding rate data not available from this data source"] };
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Funding rate data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

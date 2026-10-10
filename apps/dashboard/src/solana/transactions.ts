@@ -94,10 +94,23 @@ export function buildIncreasePositionInstruction(
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
   const [vault] = deriveVaultAddress(params.collateralMint, programId);
-  const [userVaultAccount] = deriveUserVaultAddress(vault, params.owner, programId);
+  const [userVaultAccount] = deriveUserVaultAddress(
+    vault,
+    params.owner,
+    programId,
+  );
   const [riskState] = deriveRiskStateAddress(vault, programId);
-  const [marketConfig] = deriveMarketConfigAddress(vault, params.market, programId);
-  const [position] = derivePositionAddress(vault, params.owner, params.market, programId);
+  const [marketConfig] = deriveMarketConfigAddress(
+    vault,
+    params.market,
+    programId,
+  );
+  const [position] = derivePositionAddress(
+    vault,
+    params.owner,
+    params.market,
+    programId,
+  );
 
   // Layout: discriminator(8) + side(1) + size_delta(8) + notional_delta(8) + collateral_delta(8) = 33 bytes
   const data = Buffer.alloc(8 + 1 + 8 + 8 + 8);
@@ -142,9 +155,22 @@ export function buildReducePositionInstruction(
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
   const [vault] = deriveVaultAddress(params.collateralMint, programId);
-  const [userVaultAccount] = deriveUserVaultAddress(vault, params.owner, programId);
-  const [marketConfig] = deriveMarketConfigAddress(vault, params.market, programId);
-  const [position] = derivePositionAddress(vault, params.owner, params.market, programId);
+  const [userVaultAccount] = deriveUserVaultAddress(
+    vault,
+    params.owner,
+    programId,
+  );
+  const [marketConfig] = deriveMarketConfigAddress(
+    vault,
+    params.market,
+    programId,
+  );
+  const [position] = derivePositionAddress(
+    vault,
+    params.owner,
+    params.market,
+    programId,
+  );
 
   // Layout: discriminator(8) + size_delta(8) + notional_delta(8) = 24 bytes
   const data = Buffer.alloc(8 + 8 + 8);
@@ -183,9 +209,22 @@ export function buildClosePositionInstruction(
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
   const [vault] = deriveVaultAddress(params.collateralMint, programId);
-  const [userVaultAccount] = deriveUserVaultAddress(vault, params.owner, programId);
-  const [marketConfig] = deriveMarketConfigAddress(vault, params.market, programId);
-  const [position] = derivePositionAddress(vault, params.owner, params.market, programId);
+  const [userVaultAccount] = deriveUserVaultAddress(
+    vault,
+    params.owner,
+    programId,
+  );
+  const [marketConfig] = deriveMarketConfigAddress(
+    vault,
+    params.market,
+    programId,
+  );
+  const [position] = derivePositionAddress(
+    vault,
+    params.owner,
+    params.market,
+    programId,
+  );
 
   // Layout: discriminator(8)
   const data = Buffer.alloc(8);

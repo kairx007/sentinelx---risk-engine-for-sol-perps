@@ -74,19 +74,30 @@ export function calculateLiquidityRisk(
     }
   }
 
-  if (metrics.spreadPercent === null && metrics.effectiveLiquidity === null && metrics.estimatedPriceImpactPercent === null) {
-    return { score: 0, level: "low", drivers: ["Orderbook liquidity data not available from this data source"] };
+  if (
+    metrics.spreadPercent === null &&
+    metrics.effectiveLiquidity === null &&
+    metrics.estimatedPriceImpactPercent === null
+  ) {
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Orderbook liquidity data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));
 
   if (drivers.length === 0) {
-    drivers.push("Liquidity conditions are healthy with tight spreads and adequate depth");
+    drivers.push(
+      "Liquidity conditions are healthy with tight spreads and adequate depth",
+    );
   }
 
   return { score, level: scoreToLevel(score), drivers };

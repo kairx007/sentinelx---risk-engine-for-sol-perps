@@ -1,4 +1,4 @@
-import { SourceMode } from '@sentinelx/types';
+import { SourceMode } from "@sentinelx/types";
 
 interface SystemHeaderProps {
   mode: SourceMode;
@@ -10,24 +10,27 @@ export function SystemHeader({ mode, onModeChange }: SystemHeaderProps) {
     <header className="system-header">
       <div className="system-header__brand">
         <h1 className="system-header__title">SentinelX</h1>
-        <span className={`badge badge--${mode.toLowerCase()}`} aria-label={`Source mode: ${mode}`}>
+        <span
+          className={`badge badge--${mode.toLowerCase()}`}
+          aria-label={`Source mode: ${mode}`}
+        >
           {mode}
         </span>
       </div>
 
       <nav className="system-header__nav" aria-label="Source mode selection">
         <button
-          className={`btn btn--ghost ${mode === 'LIVE' ? 'btn--active' : ''}`}
-          onClick={() => onModeChange('LIVE')}
-          aria-pressed={mode === 'LIVE'}
+          className={`btn btn--ghost ${mode === "LIVE" ? "btn--active" : ""}`}
+          onClick={() => onModeChange("LIVE")}
+          aria-pressed={mode === "LIVE"}
           type="button"
         >
           LIVE
         </button>
         <button
-          className={`btn btn--ghost ${mode === 'DEMO' ? 'btn--active' : ''}`}
-          onClick={() => onModeChange('DEMO')}
-          aria-pressed={mode === 'DEMO'}
+          className={`btn btn--ghost ${mode === "DEMO" ? "btn--active" : ""}`}
+          onClick={() => onModeChange("DEMO")}
+          aria-pressed={mode === "DEMO"}
           type="button"
         >
           DEMO

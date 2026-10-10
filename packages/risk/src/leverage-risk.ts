@@ -32,7 +32,10 @@ export function calculateLeverageRisk(
 
   const totalOiTable = leverageThresholds.totalOi;
   if (metrics.totalOpenInterest !== null && totalOiTable) {
-    const totalOiScore = scoreFromThresholds(metrics.totalOpenInterest, totalOiTable);
+    const totalOiScore = scoreFromThresholds(
+      metrics.totalOpenInterest,
+      totalOiTable,
+    );
     if (totalOiScore !== null) {
       scores.push(totalOiScore);
       if (totalOiScore >= 60) {
@@ -48,15 +51,17 @@ export function calculateLeverageRisk(
   }
 
   const velocityTable = leverageThresholds.oiVelocity;
-  const velocityValue = metrics.velocityPerSecond !== null
-    ? Math.abs(metrics.velocityPerSecond)
-    : null;
+  const velocityValue =
+    metrics.velocityPerSecond !== null
+      ? Math.abs(metrics.velocityPerSecond)
+      : null;
   if (velocityValue !== null && velocityTable) {
     const velocityScore = scoreFromThresholds(velocityValue, velocityTable);
     if (velocityScore !== null) {
       scores.push(velocityScore);
       if (velocityScore >= 50) {
-        const direction = (metrics.velocityPerSecond ?? 0) >= 0 ? "growing" : "shrinking";
+        const direction =
+          (metrics.velocityPerSecond ?? 0) >= 0 ? "growing" : "shrinking";
         drivers.push(
           `Open interest is rapidly ${direction} (${metrics.velocityPerSecond!.toFixed(1)} ${metrics.unit}/s)`,
         );
@@ -64,13 +69,21 @@ export function calculateLeverageRisk(
     }
   }
 
-  if (metrics.totalOpenInterest === null && metrics.velocityPerSecond === null) {
-    return { score: 0, level: "low", drivers: ["Open interest data not available from this data source"] };
+  if (
+    metrics.totalOpenInterest === null &&
+    metrics.velocityPerSecond === null
+  ) {
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Open interest data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

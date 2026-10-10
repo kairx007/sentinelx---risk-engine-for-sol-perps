@@ -85,7 +85,9 @@ describe("Phase 5 Live Demo Components", () => {
         chainSnapshot={dummyChainSnapshot}
       />,
     );
-    expect(screen.getByText("End-to-End Risk Orchestration Flow")).toBeDefined();
+    expect(
+      screen.getByText("End-to-End Risk Orchestration Flow"),
+    ).toBeDefined();
     expect(screen.getByText("Multi-Venue Ingestion")).toBeDefined();
     expect(screen.getByText("Divergence & Policy")).toBeDefined();
     expect(screen.getByText("Contract Enforcement")).toBeDefined();

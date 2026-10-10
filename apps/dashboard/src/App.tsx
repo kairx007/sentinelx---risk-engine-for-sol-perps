@@ -233,7 +233,11 @@ function EcosystemView({
           <span>LIQUIDATIONS</span>
         </div>
         {venues.map((item) => (
-          <VenueRow key={item.venue} item={item} onClick={() => onMarket(item.venue)} />
+          <VenueRow
+            key={item.venue}
+            item={item}
+            onClick={() => onMarket(item.venue)}
+          />
         ))}
         {venues.length === 0 && (
           <div className="empty-state">
@@ -976,8 +980,14 @@ function DashboardContent() {
             )}
             {view === "Ecosystem" && (
               <>
-                <LiveReadiness snapshot={snapshot} chainSnapshot={chainSnapshot} />
-                <ProtocolFlow snapshot={snapshot} chainSnapshot={chainSnapshot} />
+                <LiveReadiness
+                  snapshot={snapshot}
+                  chainSnapshot={chainSnapshot}
+                />
+                <ProtocolFlow
+                  snapshot={snapshot}
+                  chainSnapshot={chainSnapshot}
+                />
                 <OnChainRiskState
                   snapshot={chainSnapshot}
                   decision={snapshot?.policy.decision ?? null}
@@ -1012,4 +1022,3 @@ export function App() {
 }
 
 export default App;
-

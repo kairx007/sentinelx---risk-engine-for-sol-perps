@@ -52,10 +52,17 @@ export function buildVenueSnapshot(state: MarketState): VenueSnapshot {
 
   // Compute spread from best bid/ask if not already in metrics
   let spread: number | null = liquidity.spreadPercent;
-  if (spread === null && state.liquidity.bestBidPrice && state.liquidity.bestAskPrice) {
-    const mid = (state.liquidity.bestBidPrice + state.liquidity.bestAskPrice) / 2;
+  if (
+    spread === null &&
+    state.liquidity.bestBidPrice &&
+    state.liquidity.bestAskPrice
+  ) {
+    const mid =
+      (state.liquidity.bestBidPrice + state.liquidity.bestAskPrice) / 2;
     if (mid > 0) {
-      spread = ((state.liquidity.bestAskPrice - state.liquidity.bestBidPrice) / mid) * 100;
+      spread =
+        ((state.liquidity.bestAskPrice - state.liquidity.bestBidPrice) / mid) *
+        100;
     }
   }
 
@@ -83,7 +90,9 @@ export function buildVenueSnapshot(state: MarketState): VenueSnapshot {
  * @param snapshots - Raw `MarketState[]` from any combination of adapters.
  * @returns Map of asset → `CrossVenueRisk`
  */
-export function analyzeCrossVenue(snapshots: MarketState[]): Map<string, CrossVenueRisk> {
+export function analyzeCrossVenue(
+  snapshots: MarketState[],
+): Map<string, CrossVenueRisk> {
   const groups = new Map<string, VenueSnapshot[]>();
 
   for (const state of snapshots) {

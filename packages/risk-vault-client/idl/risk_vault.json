@@ -9,24 +9,12 @@
   "instructions": [
     {
       "name": "close_position",
-      "discriminator": [
-        123,
-        134,
-        81,
-        0,
-        49,
-        68,
-        98,
-        98
-      ],
+      "discriminator": [123, 134, 81, 0, 49, 68, 98, 98],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "user_vault_account",
-            "position"
-          ]
+          "relations": ["user_vault_account", "position"]
         },
         {
           "name": "vault",
@@ -34,13 +22,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -49,11 +31,7 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account",
-            "market_config",
-            "position"
-          ]
+          "relations": ["user_vault_account", "market_config", "position"]
         },
         {
           "name": "user_vault_account",
@@ -62,18 +40,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -88,10 +55,7 @@
         },
         {
           "name": "market",
-          "relations": [
-            "market_config",
-            "position"
-          ]
+          "relations": ["market_config", "position"]
         },
         {
           "name": "market_config",
@@ -100,19 +64,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -136,16 +88,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  111,
-                  115,
-                  105,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [112, 111, 115, 105, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -171,23 +114,12 @@
     },
     {
       "name": "deposit",
-      "discriminator": [
-        242,
-        35,
-        198,
-        137,
-        82,
-        225,
-        242,
-        182
-      ],
+      "discriminator": [242, 35, 198, 137, 82, 225, 242, 182],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "user_vault_account"
-          ]
+          "relations": ["user_vault_account"]
         },
         {
           "name": "vault",
@@ -196,13 +128,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -210,15 +136,11 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account"
-          ]
+          "relations": ["user_vault_account"]
         },
         {
           "name": "collateral_mint",
-          "relations": [
-            "vault"
-          ]
+          "relations": ["vault"]
         },
         {
           "name": "user_vault_account",
@@ -227,18 +149,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -276,38 +187,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -326,24 +208,13 @@
     },
     {
       "name": "increase_position",
-      "discriminator": [
-        253,
-        234,
-        128,
-        104,
-        192,
-        188,
-        45,
-        91
-      ],
+      "discriminator": [253, 234, 128, 104, 192, 188, 45, 91],
       "accounts": [
         {
           "name": "owner",
           "writable": true,
           "signer": true,
-          "relations": [
-            "user_vault_account"
-          ]
+          "relations": ["user_vault_account"]
         },
         {
           "name": "vault",
@@ -352,13 +223,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -367,10 +232,7 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account",
-            "market_config"
-          ]
+          "relations": ["user_vault_account", "market_config"]
         },
         {
           "name": "user_vault_account",
@@ -379,18 +241,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -409,18 +260,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  105,
-                  115,
-                  107,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
+                "value": [114, 105, 115, 107, 95, 115, 116, 97, 116, 101]
               },
               {
                 "kind": "account",
@@ -431,9 +271,7 @@
         },
         {
           "name": "market",
-          "relations": [
-            "market_config"
-          ]
+          "relations": ["market_config"]
         },
         {
           "name": "market_config",
@@ -442,19 +280,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -478,16 +304,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  111,
-                  115,
-                  105,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [112, 111, 115, 105, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -538,16 +355,7 @@
     },
     {
       "name": "initialize_market_config",
-      "discriminator": [
-        5,
-        94,
-        211,
-        203,
-        75,
-        239,
-        159,
-        255
-      ],
+      "discriminator": [5, 94, 211, 203, 75, 239, 159, 255],
       "accounts": [
         {
           "name": "authority",
@@ -560,13 +368,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -593,19 +395,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -632,10 +422,7 @@
         {
           "name": "feed_id",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -654,16 +441,7 @@
     },
     {
       "name": "initialize_user_vault_account",
-      "discriminator": [
-        10,
-        106,
-        178,
-        52,
-        164,
-        91,
-        108,
-        69
-      ],
+      "discriminator": [10, 106, 178, 52, 164, 91, 108, 69],
       "accounts": [
         {
           "name": "owner",
@@ -676,13 +454,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -699,18 +471,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -732,16 +493,7 @@
     },
     {
       "name": "initialize_vault",
-      "discriminator": [
-        48,
-        191,
-        163,
-        44,
-        71,
-        129,
-        63,
-        164
-      ],
+      "discriminator": [48, 191, 163, 44, 71, 129, 63, 164],
       "accounts": [
         {
           "name": "authority",
@@ -758,13 +510,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -780,18 +526,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  105,
-                  115,
-                  107,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
+                "value": [114, 105, 115, 107, 95, 115, 116, 97, 116, 101]
               },
               {
                 "kind": "account",
@@ -821,38 +556,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -879,16 +585,7 @@
     },
     {
       "name": "liquidate_position",
-      "discriminator": [
-        187,
-        74,
-        229,
-        149,
-        102,
-        81,
-        221,
-        68
-      ],
+      "discriminator": [187, 74, 229, 149, 102, 81, 221, 68],
       "accounts": [
         {
           "name": "liquidator",
@@ -901,13 +598,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -916,11 +607,7 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account",
-            "market_config",
-            "position"
-          ]
+          "relations": ["user_vault_account", "market_config", "position"]
         },
         {
           "name": "user_vault_account",
@@ -929,18 +616,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -956,10 +632,7 @@
         },
         {
           "name": "market",
-          "relations": [
-            "market_config",
-            "position"
-          ]
+          "relations": ["market_config", "position"]
         },
         {
           "name": "market_config",
@@ -968,19 +641,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -1004,16 +665,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  111,
-                  115,
-                  105,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [112, 111, 115, 105, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -1033,9 +685,7 @@
         },
         {
           "name": "owner",
-          "relations": [
-            "position"
-          ]
+          "relations": ["position"]
         },
         {
           "name": "clock",
@@ -1046,24 +696,12 @@
     },
     {
       "name": "reduce_position",
-      "discriminator": [
-        96,
-        202,
-        33,
-        80,
-        24,
-        197,
-        33,
-        77
-      ],
+      "discriminator": [96, 202, 33, 80, 24, 197, 33, 77],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "user_vault_account",
-            "position"
-          ]
+          "relations": ["user_vault_account", "position"]
         },
         {
           "name": "vault",
@@ -1072,13 +710,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1087,11 +719,7 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account",
-            "market_config",
-            "position"
-          ]
+          "relations": ["user_vault_account", "market_config", "position"]
         },
         {
           "name": "user_vault_account",
@@ -1100,18 +728,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1126,10 +743,7 @@
         },
         {
           "name": "market",
-          "relations": [
-            "market_config",
-            "position"
-          ]
+          "relations": ["market_config", "position"]
         },
         {
           "name": "market_config",
@@ -1138,19 +752,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -1174,16 +776,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  111,
-                  115,
-                  105,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [112, 111, 115, 105, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -1218,23 +811,12 @@
     },
     {
       "name": "rotate_risk_authority",
-      "discriminator": [
-        253,
-        161,
-        29,
-        27,
-        214,
-        135,
-        237,
-        84
-      ],
+      "discriminator": [253, 161, 29, 27, 214, 135, 237, 84],
       "accounts": [
         {
           "name": "authority",
           "signer": true,
-          "relations": [
-            "vault"
-          ]
+          "relations": ["vault"]
         },
         {
           "name": "vault",
@@ -1243,13 +825,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1269,23 +845,12 @@
     },
     {
       "name": "update_market_config",
-      "discriminator": [
-        91,
-        87,
-        149,
-        101,
-        110,
-        116,
-        16,
-        120
-      ],
+      "discriminator": [91, 87, 149, 101, 110, 116, 16, 120],
       "accounts": [
         {
           "name": "authority",
           "signer": true,
-          "relations": [
-            "market_config"
-          ]
+          "relations": ["market_config"]
         },
         {
           "name": "vault",
@@ -1293,13 +858,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1308,9 +867,7 @@
               }
             ]
           },
-          "relations": [
-            "market_config"
-          ]
+          "relations": ["market_config"]
         },
         {
           "name": "market_config",
@@ -1320,19 +877,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  109, 97, 114, 107, 101, 116, 95, 99, 111, 110, 102, 105, 103
                 ]
               },
               {
@@ -1355,10 +900,7 @@
         {
           "name": "feed_id",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -1377,16 +919,7 @@
     },
     {
       "name": "update_risk_state",
-      "discriminator": [
-        71,
-        227,
-        24,
-        202,
-        12,
-        22,
-        17,
-        96
-      ],
+      "discriminator": [71, 227, 24, 202, 12, 22, 17, 96],
       "accounts": [
         {
           "name": "risk_authority",
@@ -1398,13 +931,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1421,18 +948,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  105,
-                  115,
-                  107,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
+                "value": [114, 105, 115, 107, 95, 115, 116, 97, 116, 101]
               },
               {
                 "kind": "account",
@@ -1483,23 +999,12 @@
     },
     {
       "name": "withdraw",
-      "discriminator": [
-        183,
-        18,
-        70,
-        156,
-        148,
-        109,
-        161,
-        34
-      ],
+      "discriminator": [183, 18, 70, 156, 148, 109, 161, 34],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "user_vault_account"
-          ]
+          "relations": ["user_vault_account"]
         },
         {
           "name": "vault",
@@ -1508,13 +1013,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1522,15 +1021,11 @@
               }
             ]
           },
-          "relations": [
-            "user_vault_account"
-          ]
+          "relations": ["user_vault_account"]
         },
         {
           "name": "collateral_mint",
-          "relations": [
-            "vault"
-          ]
+          "relations": ["vault"]
         },
         {
           "name": "user_vault_account",
@@ -1539,18 +1034,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [117, 115, 101, 114, 95, 118, 97, 117, 108, 116]
               },
               {
                 "kind": "account",
@@ -1584,38 +1068,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -1640,213 +1095,69 @@
   "accounts": [
     {
       "name": "MarketConfig",
-      "discriminator": [
-        119,
-        255,
-        200,
-        88,
-        252,
-        82,
-        128,
-        24
-      ]
+      "discriminator": [119, 255, 200, 88, 252, 82, 128, 24]
     },
     {
       "name": "Position",
-      "discriminator": [
-        170,
-        188,
-        143,
-        228,
-        122,
-        64,
-        247,
-        208
-      ]
+      "discriminator": [170, 188, 143, 228, 122, 64, 247, 208]
     },
     {
       "name": "RiskState",
-      "discriminator": [
-        120,
-        33,
-        58,
-        236,
-        210,
-        191,
-        106,
-        97
-      ]
+      "discriminator": [120, 33, 58, 236, 210, 191, 106, 97]
     },
     {
       "name": "UserVaultAccount",
-      "discriminator": [
-        218,
-        203,
-        238,
-        239,
-        140,
-        59,
-        186,
-        198
-      ]
+      "discriminator": [218, 203, 238, 239, 140, 59, 186, 198]
     },
     {
       "name": "Vault",
-      "discriminator": [
-        211,
-        8,
-        232,
-        43,
-        2,
-        152,
-        117,
-        119
-      ]
+      "discriminator": [211, 8, 232, 43, 2, 152, 117, 119]
     }
   ],
   "events": [
     {
       "name": "Deposit",
-      "discriminator": [
-        62,
-        205,
-        242,
-        175,
-        244,
-        169,
-        136,
-        52
-      ]
+      "discriminator": [62, 205, 242, 175, 244, 169, 136, 52]
     },
     {
       "name": "MarketConfigInitialized",
-      "discriminator": [
-        215,
-        170,
-        151,
-        136,
-        30,
-        87,
-        38,
-        101
-      ]
+      "discriminator": [215, 170, 151, 136, 30, 87, 38, 101]
     },
     {
       "name": "MarketConfigUpdated",
-      "discriminator": [
-        7,
-        181,
-        49,
-        237,
-        18,
-        92,
-        160,
-        192
-      ]
+      "discriminator": [7, 181, 49, 237, 18, 92, 160, 192]
     },
     {
       "name": "PositionClosed",
-      "discriminator": [
-        157,
-        163,
-        227,
-        228,
-        13,
-        97,
-        138,
-        121
-      ]
+      "discriminator": [157, 163, 227, 228, 13, 97, 138, 121]
     },
     {
       "name": "PositionIncreased",
-      "discriminator": [
-        73,
-        58,
-        247,
-        181,
-        100,
-        237,
-        249,
-        81
-      ]
+      "discriminator": [73, 58, 247, 181, 100, 237, 249, 81]
     },
     {
       "name": "PositionLiquidated",
-      "discriminator": [
-        40,
-        107,
-        90,
-        214,
-        96,
-        30,
-        61,
-        128
-      ]
+      "discriminator": [40, 107, 90, 214, 96, 30, 61, 128]
     },
     {
       "name": "PositionReduced",
-      "discriminator": [
-        251,
-        198,
-        158,
-        1,
-        128,
-        208,
-        153,
-        2
-      ]
+      "discriminator": [251, 198, 158, 1, 128, 208, 153, 2]
     },
     {
       "name": "RiskAuthorityRotated",
-      "discriminator": [
-        221,
-        37,
-        94,
-        39,
-        48,
-        76,
-        158,
-        244
-      ]
+      "discriminator": [221, 37, 94, 39, 48, 76, 158, 244]
     },
     {
       "name": "RiskStateUpdated",
-      "discriminator": [
-        88,
-        98,
-        82,
-        13,
-        246,
-        246,
-        90,
-        166
-      ]
+      "discriminator": [88, 98, 82, 13, 246, 246, 90, 166]
     },
     {
       "name": "VaultInitialized",
-      "discriminator": [
-        180,
-        43,
-        207,
-        2,
-        18,
-        71,
-        3,
-        75
-      ]
+      "discriminator": [180, 43, 207, 2, 18, 71, 3, 75]
     },
     {
       "name": "Withdraw",
-      "discriminator": [
-        192,
-        241,
-        201,
-        217,
-        70,
-        150,
-        90,
-        247
-      ]
+      "discriminator": [192, 241, 201, 217, 70, 150, 90, 247]
     }
   ],
   "errors": [
@@ -2160,10 +1471,7 @@
           {
             "name": "feed_id",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -2209,10 +1517,7 @@
           {
             "name": "feed_id",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -2254,10 +1559,7 @@
           {
             "name": "feed_id",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -2627,10 +1929,7 @@
               "`FeedId` but avoid the type alias because of compatibility issues with Anchor's `idl-build` feature."
             ],
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -2647,9 +1946,7 @@
           },
           {
             "name": "publish_time",
-            "docs": [
-              "The timestamp of this price update in seconds"
-            ],
+            "docs": ["The timestamp of this price update in seconds"],
             "type": "i64"
           },
           {

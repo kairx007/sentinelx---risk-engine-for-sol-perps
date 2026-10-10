@@ -75,13 +75,22 @@ export function calculateOracleRisk(
     }
   }
 
-  if (metrics.oracleAgeMs === null && metrics.markIndexDeviationPercent === null && metrics.indexOracleDeviationPercent === null) {
-    return { score: 0, level: "low", drivers: ["Oracle data not available from this data source"] };
+  if (
+    metrics.oracleAgeMs === null &&
+    metrics.markIndexDeviationPercent === null &&
+    metrics.indexOracleDeviationPercent === null
+  ) {
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Oracle data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

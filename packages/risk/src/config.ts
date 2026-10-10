@@ -10,7 +10,9 @@ export const STALE_DATA_SCORE_PENALTY = 15;
  * Maps a numeric score (0–100) to a risk level.
  * Ranges: 0–25 low, 26–50 medium, 51–75 high, 76–100 critical.
  */
-export function scoreToLevel(score: number): "low" | "medium" | "high" | "critical" {
+export function scoreToLevel(
+  score: number,
+): "low" | "medium" | "high" | "critical" {
   if (score >= 76) return "critical";
   if (score >= 51) return "high";
   if (score >= 26) return "medium";
@@ -187,7 +189,7 @@ export const fundingThresholds: RiskThresholds = {
     { at: 0.001, score: 20 },
     { at: 0.01, score: 50 },
     { at: 0.05, score: 80 },
-    { at: 0.10, score: 100 },
+    { at: 0.1, score: 100 },
   ],
   fundingChange: [
     { at: 0, score: 0 },

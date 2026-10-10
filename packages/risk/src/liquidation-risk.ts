@@ -1,5 +1,8 @@
 import type { MarketState } from "@perps-risk/types";
-import type { LiquidationMetrics, OpenInterestMetrics } from "@perps-risk/metrics";
+import type {
+  LiquidationMetrics,
+  OpenInterestMetrics,
+} from "@perps-risk/metrics";
 import type { RiskComponentResult } from "./types.js";
 import {
   scoreFromThresholds,
@@ -71,12 +74,17 @@ export function calculateLiquidationRisk(
   }
 
   if (liquidation.totalVolume === null) {
-    return { score: 0, level: "low", drivers: ["Liquidation data not available from this data source"] };
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Liquidation data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

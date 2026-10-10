@@ -31,7 +31,8 @@ export function EventTimeline({
       timestamp: new Date(Date.now() - 22_000).toLocaleTimeString(),
       type: "POLICY",
       title: "Policy Evaluated",
-      detail: "Max leverage ceiling computed based on ecosystem contagion metrics.",
+      detail:
+        "Max leverage ceiling computed based on ecosystem contagion metrics.",
       status: "success",
     },
     {
@@ -47,16 +48,21 @@ export function EventTimeline({
       timestamp: new Date(Date.now() - 5_000).toLocaleTimeString(),
       type: "SIMULATION",
       title: "Leverage Gate Active",
-      detail: "Contract simulates incoming position orders and enforces max leverage cap.",
+      detail:
+        "Contract simulates incoming position orders and enforces max leverage cap.",
       status: "warning",
     },
   ];
 
   const events = recentEvents.length > 0 ? recentEvents : defaultEvents;
-  const filteredEvents = filter === "ALL" ? events : events.filter((e) => e.type === filter);
+  const filteredEvents =
+    filter === "ALL" ? events : events.filter((e) => e.type === filter);
 
   return (
-    <section className="card event-timeline-card" aria-label="Live event audit timeline">
+    <section
+      className="card event-timeline-card"
+      aria-label="Live event audit timeline"
+    >
       <div className="card-title">
         <div>
           <span className="mini-icon blue">📜</span>

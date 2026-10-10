@@ -67,7 +67,9 @@ function makeState(overrides: Partial<MarketState> = {}): MarketState {
 
 describe("assetKey", () => {
   it("uses baseAsset when present", () => {
-    const state = makeState({ market: { ...makeState().market, baseAsset: "BTC" } });
+    const state = makeState({
+      market: { ...makeState().market, baseAsset: "BTC" },
+    });
     expect(assetKey(state)).toBe("BTC");
   });
 
@@ -79,7 +81,9 @@ describe("assetKey", () => {
   });
 
   it("lowercases the result", () => {
-    const state = makeState({ market: { ...makeState().market, baseAsset: "sol" } });
+    const state = makeState({
+      market: { ...makeState().market, baseAsset: "sol" },
+    });
     expect(assetKey(state)).toBe("SOL");
   });
 });

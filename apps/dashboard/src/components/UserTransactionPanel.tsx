@@ -39,8 +39,10 @@ export function UserTransactionPanel({
   const parsedSize = parseFloat(sizeSol) || 0;
   const parsedCollateral = parseFloat(collateralUsdc) || 1;
   const notionalUsd = parsedSize * estimatedPrice;
-  const requestedLeverage = parsedCollateral > 0 ? notionalUsd / parsedCollateral : 0;
-  const exceedsCap = activeTab === "increase" && requestedLeverage > maxLeverage;
+  const requestedLeverage =
+    parsedCollateral > 0 ? notionalUsd / parsedCollateral : 0;
+  const exceedsCap =
+    activeTab === "increase" && requestedLeverage > maxLeverage;
 
   const handleSimulateAndSend = async () => {
     if (!wallet.connected || !wallet.publicKey) {
@@ -69,7 +71,9 @@ export function UserTransactionPanel({
       if (activeTab === "increase") {
         const sizeDelta = BigInt(Math.round(parsedSize * 1_000_000));
         const notionalDelta = BigInt(Math.round(notionalUsd * 1_000_000));
-        const collateralDelta = BigInt(Math.round(parsedCollateral * 1_000_000));
+        const collateralDelta = BigInt(
+          Math.round(parsedCollateral * 1_000_000),
+        );
 
         ix = buildIncreasePositionInstruction({
           owner: wallet.publicKey,
@@ -121,7 +125,9 @@ export function UserTransactionPanel({
         const signedTx = await wallet.signTransaction(transaction);
         setTxStatus("Broadcasting to Solana cluster…");
         const sig = await connection.sendRawTransaction(signedTx.serialize());
-        setTxStatus(`Confirmed: https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+        setTxStatus(
+          `Confirmed: https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+        );
       }
     } catch (err: any) {
       setTxError(err.message || "Transaction failed");
@@ -203,7 +209,9 @@ export function UserTransactionPanel({
               />
             </div>
             <div>
-              <label htmlFor={`${formId}-collateral`}>Collateral Deposit (USDC)</label>
+              <label htmlFor={`${formId}-collateral`}>
+                Collateral Deposit (USDC)
+              </label>
               <input
                 id={`${formId}-collateral`}
                 type="number"
@@ -217,16 +225,21 @@ export function UserTransactionPanel({
 
           <div className="leverage-indicator-row">
             <span className="label">Requested Leverage:</span>
-            <strong className={exceedsCap ? "leverage-breached" : "leverage-safe"}>
+            <strong
+              className={exceedsCap ? "leverage-breached" : "leverage-safe"}
+            >
               {requestedLeverage.toFixed(2)}×
             </strong>
-            <span className="cap-label">(Max Cap: {maxLeverage.toFixed(2)}×)</span>
+            <span className="cap-label">
+              (Max Cap: {maxLeverage.toFixed(2)}×)
+            </span>
           </div>
 
           {exceedsCap && (
             <div className="leverage-warning-callout">
-              ⚠️ Requested leverage ({requestedLeverage.toFixed(2)}×) exceeds on-chain RiskState cap ({maxLeverage.toFixed(2)}×).
-              Transaction will be rejected by the contract.
+              ⚠️ Requested leverage ({requestedLeverage.toFixed(2)}×) exceeds
+              on-chain RiskState cap ({maxLeverage.toFixed(2)}×). Transaction
+              will be rejected by the contract.
             </div>
           )}
         </div>
@@ -236,7 +249,9 @@ export function UserTransactionPanel({
         <div className="tx-form">
           <div className="input-row">
             <div>
-              <label htmlFor={`${formId}-reduce-size`}>Size to Reduce (SOL)</label>
+              <label htmlFor={`${formId}-reduce-size`}>
+                Size to Reduce (SOL)
+              </label>
               <input
                 id={`${formId}-reduce-size`}
                 type="number"
@@ -248,7 +263,8 @@ export function UserTransactionPanel({
             </div>
           </div>
           <p className="tx-note">
-            Risk-reducing action: Lowering position size is authorized regardless of risk state elevation.
+            Risk-reducing action: Lowering position size is authorized
+            regardless of risk state elevation.
           </p>
         </div>
       )}
@@ -256,7 +272,8 @@ export function UserTransactionPanel({
       {activeTab === "close" && (
         <div className="tx-form">
           <p className="tx-note">
-            Full exit: Closes open position and settles available margin back to UserVaultAccount.
+            Full exit: Closes open position and settles available margin back to
+            UserVaultAccount.
           </p>
         </div>
       )}

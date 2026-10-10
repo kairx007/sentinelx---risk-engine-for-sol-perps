@@ -78,11 +78,11 @@ The Rust test suite uses LiteSVM. `Anchor.toml` sets `skip_local_validator = tru
 
 ## 6. Recommended scope and option evaluation
 
-| Option | Assessment | Classification |
-|---|---|---|
-| A — price, PnL, ratio, basic liquidation | Leaves important maintenance and liquidation policy underspecified; insufficient alone for a risk-managed perp claim. | **OPTIONAL** only as a throwaway internal prototype; not the recommended deliverable. |
-| B — validated oracle through liquidation | Appropriate if narrowed to isolated collateral, one configured price per market, deterministic maintenance threshold, and full liquidation. This closes the core safety loop while remaining venue-agnostic. | **MUST HAVE** recommended core. |
-| C — complete perps layer | Adds complex settlement, cross-margin, funding, incentives, insurance, and venue effects unrelated to the project's risk-policy differentiator. | **DEFER**. |
+| Option                                   | Assessment                                                                                                                                                                                                   | Classification                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| A — price, PnL, ratio, basic liquidation | Leaves important maintenance and liquidation policy underspecified; insufficient alone for a risk-managed perp claim.                                                                                        | **OPTIONAL** only as a throwaway internal prototype; not the recommended deliverable. |
+| B — validated oracle through liquidation | Appropriate if narrowed to isolated collateral, one configured price per market, deterministic maintenance threshold, and full liquidation. This closes the core safety loop while remaining venue-agnostic. | **MUST HAVE** recommended core.                                                       |
+| C — complete perps layer                 | Adds complex settlement, cross-margin, funding, incentives, insurance, and venue effects unrelated to the project's risk-policy differentiator.                                                              | **DEFER**.                                                                            |
 
 ## 7. Oracle design
 
@@ -116,13 +116,13 @@ Extreme-deviation validation requires a trusted prior observation or independent
 
 ## 8. Price representation
 
-| Representation | Pros | Risks/limitations |
-|---|---|---|
-| `u64` fixed decimal | Simple positive prices and arithmetic. | Scale/precision is implicit; conversion from provider exponent can lose precision. |
-| `i64` fixed decimal | Represents signed PnL-like values. | Oracle price should never be signed; conflates price and PnL domains. |
-| integer plus exponent | Preserves oracle precision, compact and natural for Pyth-like feeds. | Mixed exponents require explicit normalization before comparison/multiplication. |
-| Q-format | Explicit binary scale and deterministic. | Less intuitive for oracle decimals and client tooling; conversion complexity. |
-| Oracle-native | No input conversion for provider. | Couples core accounting and clients to provider encoding. |
+| Representation        | Pros                                                                 | Risks/limitations                                                                  |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `u64` fixed decimal   | Simple positive prices and arithmetic.                               | Scale/precision is implicit; conversion from provider exponent can lose precision. |
+| `i64` fixed decimal   | Represents signed PnL-like values.                                   | Oracle price should never be signed; conflates price and PnL domains.              |
+| integer plus exponent | Preserves oracle precision, compact and natural for Pyth-like feeds. | Mixed exponents require explicit normalization before comparison/multiplication.   |
+| Q-format              | Explicit binary scale and deterministic.                             | Less intuitive for oracle decimals and client tooling; conversion complexity.      |
+| Oracle-native         | No input conversion for provider.                                    | Couples core accounting and clients to provider encoding.                          |
 
 **Recommendation — MUST HAVE:** Normalize validated positive oracle prices to a documented decimal fixed-point format using a per-protocol constant scale, and store positions' entry price in that same format. Select the decimal scale only after the quote-token decimal and supported price range are fixed. Store prices as positive `u64`; represent signed PnL separately as `i128` intermediate/result or checked signed magnitude as account-size constraints require. Perform conversions using checked `i128`/`u128`; no floating point. Keep provider exponent in decoding/conversion only unless retaining raw observation is needed for audit/event emission.
 
@@ -130,18 +130,18 @@ A `ValidatedPrice` should include normalized price and publish time for the inst
 
 ## 9. Position schema changes
 
-| Existing field | Assessment / proposal | Classification |
-|---|---|---|
-| `owner`, `vault`, `market`, `side`, `status`, `bump` | Preserve identity/status/PDA checks. Strengthen `market` through `MarketConfig` and expected oracle feed. | **MUST HAVE** |
-| `size: u64` | Currently undefined units; define as base-asset quantity in a fixed base precision, not caller-labelled “size”. | **MUST HAVE** |
-| `notional: u64` | Currently caller-supplied quote exposure. It is not enough to recover entry price after price moves and should not be the PnL basis. Replace or clearly redefine as derived current/entry notional; avoid storing duplicate values if derivable. | **MUST HAVE** |
-| `collateral_locked: u64` | Preserve as collateral-token units earmarked for this isolated position. Validate aggregate user locked amount against sum/controlled position transitions. | **MUST HAVE** |
-| `opened_at` | Preserve as original open time; optional update time is useful for observability but not needed for PnL. | `opened_at` **SHOULD HAVE**; update time **OPTIONAL** |
-| entry price | Add `entry_price` in normalized fixed-point units. Needed to compute unrealized PnL. | **MUST HAVE** |
-| average entry | With same-side adds, update weighted average entry using base quantity and a defined rounding rule; a separate average field is unnecessary if `entry_price` is explicitly average entry. | **MUST HAVE** |
-| realized PnL | Add only if reduce/close settles PnL into collateral/equity atomically. If no realization is paid/charged in the first demo, do not pretend a close settles PnL. | **MUST HAVE** if settlement is in scope; otherwise Phase 6 MVP must limit operations or document no settlement. |
-| mark/current price | Do not persist as authoritative current state; it goes stale immediately. | **DEFER** |
-| unrealized PnL | Derivable from validated price + position; do not persist it as authoritative state. Emit calculated value if useful. | **SHOULD HAVE** event only |
+| Existing field                                       | Assessment / proposal                                                                                                                                                                                                                            | Classification                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `owner`, `vault`, `market`, `side`, `status`, `bump` | Preserve identity/status/PDA checks. Strengthen `market` through `MarketConfig` and expected oracle feed.                                                                                                                                        | **MUST HAVE**                                                                                                   |
+| `size: u64`                                          | Currently undefined units; define as base-asset quantity in a fixed base precision, not caller-labelled “size”.                                                                                                                                  | **MUST HAVE**                                                                                                   |
+| `notional: u64`                                      | Currently caller-supplied quote exposure. It is not enough to recover entry price after price moves and should not be the PnL basis. Replace or clearly redefine as derived current/entry notional; avoid storing duplicate values if derivable. | **MUST HAVE**                                                                                                   |
+| `collateral_locked: u64`                             | Preserve as collateral-token units earmarked for this isolated position. Validate aggregate user locked amount against sum/controlled position transitions.                                                                                      | **MUST HAVE**                                                                                                   |
+| `opened_at`                                          | Preserve as original open time; optional update time is useful for observability but not needed for PnL.                                                                                                                                         | `opened_at` **SHOULD HAVE**; update time **OPTIONAL**                                                           |
+| entry price                                          | Add `entry_price` in normalized fixed-point units. Needed to compute unrealized PnL.                                                                                                                                                             | **MUST HAVE**                                                                                                   |
+| average entry                                        | With same-side adds, update weighted average entry using base quantity and a defined rounding rule; a separate average field is unnecessary if `entry_price` is explicitly average entry.                                                        | **MUST HAVE**                                                                                                   |
+| realized PnL                                         | Add only if reduce/close settles PnL into collateral/equity atomically. If no realization is paid/charged in the first demo, do not pretend a close settles PnL.                                                                                 | **MUST HAVE** if settlement is in scope; otherwise Phase 6 MVP must limit operations or document no settlement. |
+| mark/current price                                   | Do not persist as authoritative current state; it goes stale immediately.                                                                                                                                                                        | **DEFER**                                                                                                       |
+| unrealized PnL                                       | Derivable from validated price + position; do not persist it as authoritative state. Emit calculated value if useful.                                                                                                                            | **SHOULD HAVE** event only                                                                                      |
 
 **Migration:** Adding fields to Anchor accounts changes serialized layout and `INIT_SPACE`; old Position accounts cannot be safely deserialized as the new schema without a versioned migration. This is a prototype, so the clean MVP is a versioned program/account migration decision made before deployment. Either (a) deploy a new program ID/new PDA namespace and require positions to be reopened, or (b) add an explicit version/migration instruction with old-layout decoding and account realloc/rent handling. Do not silently reinterpret old `size` or `notional`. This migration choice is **MUST HAVE** before implementation/deployment.
 
@@ -226,14 +226,14 @@ Off-chain stays responsible for OI, funding, liquidity, liquidation pressure, vo
 
 ## 18. Account/PDA changes
 
-| Account | Seeds/owner/authority | Fields and justification | Classification |
-|---|---|---|---|
-| `MarketConfig` | New PDA `[market_config, vault, market]`; program-owned; initialized/updated by a specified vault authority (possibly `Vault.authority`). | market key, expected provider program, oracle/feed identity, quote/collateral scale, supported exponent/price bounds, confidence/freshness bounds, maintenance bps, config version/bump. Needed to stop users supplying a wrong feed or arbitrary market. | **MUST HAVE** if market set is permissionless today; otherwise embed in an existing authoritative registry if one exists. |
-| `Position` | Existing seeds `[position, vault, owner, market]`; program-owned. | Add normalized average entry price and explicit unit/schema version; realized PnL only if settlement is implemented. | **MUST HAVE** |
-| `RiskState` | Existing `[risk_state, vault]`; risk-authority updates. | No oracle price, PnL, or maintenance fields required for MVP. | Preserve; no schema change **MUST HAVE** |
-| `OracleConfig` separate account | Could be provider/feed specific, but duplicates MarketConfig mapping for single-provider MVP. | Avoid unless multiple markets share independently governed oracle settings or config space requires it. | **DEFER** |
-| `InsuranceFund` | New PDA/token vault and authority. | No present need until funded bad-debt backstop is designed. | **DEFER** |
-| `LiquidationState` | New PDA. | Eligibility is derived atomically per position; persistent queue/epoch state is unnecessary for permissionless full close. | **DEFER** |
+| Account                         | Seeds/owner/authority                                                                                                                     | Fields and justification                                                                                                                                                                                                                                  | Classification                                                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `MarketConfig`                  | New PDA `[market_config, vault, market]`; program-owned; initialized/updated by a specified vault authority (possibly `Vault.authority`). | market key, expected provider program, oracle/feed identity, quote/collateral scale, supported exponent/price bounds, confidence/freshness bounds, maintenance bps, config version/bump. Needed to stop users supplying a wrong feed or arbitrary market. | **MUST HAVE** if market set is permissionless today; otherwise embed in an existing authoritative registry if one exists. |
+| `Position`                      | Existing seeds `[position, vault, owner, market]`; program-owned.                                                                         | Add normalized average entry price and explicit unit/schema version; realized PnL only if settlement is implemented.                                                                                                                                      | **MUST HAVE**                                                                                                             |
+| `RiskState`                     | Existing `[risk_state, vault]`; risk-authority updates.                                                                                   | No oracle price, PnL, or maintenance fields required for MVP.                                                                                                                                                                                             | Preserve; no schema change **MUST HAVE**                                                                                  |
+| `OracleConfig` separate account | Could be provider/feed specific, but duplicates MarketConfig mapping for single-provider MVP.                                             | Avoid unless multiple markets share independently governed oracle settings or config space requires it.                                                                                                                                                   | **DEFER**                                                                                                                 |
+| `InsuranceFund`                 | New PDA/token vault and authority.                                                                                                        | No present need until funded bad-debt backstop is designed.                                                                                                                                                                                               | **DEFER**                                                                                                                 |
+| `LiquidationState`              | New PDA.                                                                                                                                  | Eligibility is derived atomically per position; persistent queue/epoch state is unnecessary for permissionless full close.                                                                                                                                | **DEFER**                                                                                                                 |
 
 If Position account versions change, include old/new layouts and migration/redeployment instructions. Never reuse existing PDAs while assuming accounts have new bytes.
 
@@ -270,21 +270,21 @@ Add explicit errors with deterministic client meaning: `InvalidOracleAccount`, `
 
 ## 23. Security threat model
 
-| Threat | Required control | Class |
-|---|---|---|
-| Stale/future/zero/negative/extreme-confidence price | Freshness, sign, confidence, exponent, range checks before use | **MUST HAVE** |
-| Wrong oracle owner/feed/market | Configured provider owner + feed ID + MarketConfig/PDA binding | **MUST HAVE** |
-| Malformed account | Validate owner, discriminator/layout, data length, parser result | **MUST HAVE** |
-| Caller-chosen price/PnL/liquidation flag | Never accept as trusted instruction args; parse configured oracle account | **MUST HAVE** |
-| Race between submit and execution | Use execution-time transaction account snapshot and enforce publish-time freshness; no off-chain precheck is authoritative | **MUST HAVE** |
-| Wrong owner, vault, market, fake Position PDA | Preserve seeds, `has_one`, owner signer on owner actions; validate config market/feed | **MUST HAVE** |
-| Double liquidation/close | Require Open state; atomic state transition to Closed and zero values; second call fails | **MUST HAVE** |
-| Liquidating healthy account | Program-computed signed equity/maintenance with same price snapshot; strict comparison rule | **MUST HAVE** |
-| Reward manipulation / repeat partial liquidation | No MVP reward or partial liquidation | **DEFER** |
-| Arithmetic overflow/underflow/precision truncation/divide by zero | checked wide arithmetic, domain bounds, explicit directional rounding, no ratio division for eligibility | **MUST HAVE** |
-| Stale/malicious/wrong RiskState or policy bypass | Existing PDA, authority, nonce, timestamp, cap validation remains on increases; liquidation path does not consult it | **MUST HAVE** |
-| Bad debt drains other users | Isolated collateral accounting, explicit debt result, no implicit share/vault debit | **MUST HAVE** |
-| Config authority changes threshold/feed maliciously | Authority restriction, bounded params, update event/version; authority rotation and governance documented | **MUST HAVE** |
+| Threat                                                            | Required control                                                                                                           | Class         |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Stale/future/zero/negative/extreme-confidence price               | Freshness, sign, confidence, exponent, range checks before use                                                             | **MUST HAVE** |
+| Wrong oracle owner/feed/market                                    | Configured provider owner + feed ID + MarketConfig/PDA binding                                                             | **MUST HAVE** |
+| Malformed account                                                 | Validate owner, discriminator/layout, data length, parser result                                                           | **MUST HAVE** |
+| Caller-chosen price/PnL/liquidation flag                          | Never accept as trusted instruction args; parse configured oracle account                                                  | **MUST HAVE** |
+| Race between submit and execution                                 | Use execution-time transaction account snapshot and enforce publish-time freshness; no off-chain precheck is authoritative | **MUST HAVE** |
+| Wrong owner, vault, market, fake Position PDA                     | Preserve seeds, `has_one`, owner signer on owner actions; validate config market/feed                                      | **MUST HAVE** |
+| Double liquidation/close                                          | Require Open state; atomic state transition to Closed and zero values; second call fails                                   | **MUST HAVE** |
+| Liquidating healthy account                                       | Program-computed signed equity/maintenance with same price snapshot; strict comparison rule                                | **MUST HAVE** |
+| Reward manipulation / repeat partial liquidation                  | No MVP reward or partial liquidation                                                                                       | **DEFER**     |
+| Arithmetic overflow/underflow/precision truncation/divide by zero | checked wide arithmetic, domain bounds, explicit directional rounding, no ratio division for eligibility                   | **MUST HAVE** |
+| Stale/malicious/wrong RiskState or policy bypass                  | Existing PDA, authority, nonce, timestamp, cap validation remains on increases; liquidation path does not consult it       | **MUST HAVE** |
+| Bad debt drains other users                                       | Isolated collateral accounting, explicit debt result, no implicit share/vault debit                                        | **MUST HAVE** |
+| Config authority changes threshold/feed maliciously               | Authority restriction, bounded params, update event/version; authority rotation and governance documented                  | **MUST HAVE** |
 
 ## 24. Testing strategy
 
@@ -325,26 +325,26 @@ All tests use LiteSVM and should construct provider-owned oracle accounts with v
 
 ## 27. File-by-file change plan
 
-| File | Planned work | Class |
-|---|---|---|
-| `src/state.rs` | Add MarketConfig; define Position unit/version and entry/settlement fields; preserve RiskState | **MUST HAVE** |
-| `src/constants.rs` | Add PDA seed, fixed scales, hard bounds; set oracle freshness only after provider cadence decision | **MUST HAVE** |
-| `src/errors.rs` | Add oracle/config/margin/liquidation/bad-debt errors | **MUST HAVE** |
-| `src/math.rs` | Add normalization, signed PnL, weighted-entry, initial/maintenance margin, range-safe helpers | **MUST HAVE** |
-| `src/oracle.rs` (new) | Provider account validation and normalized validated price; no caller-trusted values | **MUST HAVE** |
-| `src/market_config.rs` or `instructions/market_config.rs` (new) | Initialize/update configuration and bound admin changes | **MUST HAVE** |
-| `src/instructions/mod.rs` | Export config/liquidation instructions and modules | **MUST HAVE** |
-| `src/instructions/increase_position.rs` | Load config/feed, validate price, compute entry notional/margin, enforce RiskState | **MUST HAVE** |
-| `src/instructions/reduce_position.rs` | Price-aware quantity reduction and PnL/collateral settlement rules | **MUST HAVE** |
-| `src/instructions/close_position.rs` | Safe settlement and close accounting | **MUST HAVE** |
-| `src/instructions/liquidate_position.rs` (new) | Permissionless validated full liquidation | **MUST HAVE** |
-| `src/instructions/withdraw.rs` | Check liabilities/free collateral under final equity/custody model | **MUST HAVE** |
-| `src/lib.rs` | Expose config and liquidation entrypoints; generated IDL/client impact | **MUST HAVE** |
-| `tests/test_oracle.rs` (new) | Oracle parsing, binding, freshness, confidence, precision | **MUST HAVE** |
-| `tests/test_pnl_margin.rs` (new) | Formula, rounding, boundary, overflow, margin | **MUST HAVE** |
-| `tests/test_liquidation.rs` (new) | Eligibility, keeper, state/accounting atomicity, RiskState independence, bad debt | **MUST HAVE** |
-| Existing Rust tests | Update helpers/fixtures to declared units; preserve Phase 1–5 behavior | **MUST HAVE** |
-| `docs/phase-6-implementation-plan.md` | Architecture decision/spec (this file) | Done; no code changes |
+| File                                                            | Planned work                                                                                       | Class                 |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------- |
+| `src/state.rs`                                                  | Add MarketConfig; define Position unit/version and entry/settlement fields; preserve RiskState     | **MUST HAVE**         |
+| `src/constants.rs`                                              | Add PDA seed, fixed scales, hard bounds; set oracle freshness only after provider cadence decision | **MUST HAVE**         |
+| `src/errors.rs`                                                 | Add oracle/config/margin/liquidation/bad-debt errors                                               | **MUST HAVE**         |
+| `src/math.rs`                                                   | Add normalization, signed PnL, weighted-entry, initial/maintenance margin, range-safe helpers      | **MUST HAVE**         |
+| `src/oracle.rs` (new)                                           | Provider account validation and normalized validated price; no caller-trusted values               | **MUST HAVE**         |
+| `src/market_config.rs` or `instructions/market_config.rs` (new) | Initialize/update configuration and bound admin changes                                            | **MUST HAVE**         |
+| `src/instructions/mod.rs`                                       | Export config/liquidation instructions and modules                                                 | **MUST HAVE**         |
+| `src/instructions/increase_position.rs`                         | Load config/feed, validate price, compute entry notional/margin, enforce RiskState                 | **MUST HAVE**         |
+| `src/instructions/reduce_position.rs`                           | Price-aware quantity reduction and PnL/collateral settlement rules                                 | **MUST HAVE**         |
+| `src/instructions/close_position.rs`                            | Safe settlement and close accounting                                                               | **MUST HAVE**         |
+| `src/instructions/liquidate_position.rs` (new)                  | Permissionless validated full liquidation                                                          | **MUST HAVE**         |
+| `src/instructions/withdraw.rs`                                  | Check liabilities/free collateral under final equity/custody model                                 | **MUST HAVE**         |
+| `src/lib.rs`                                                    | Expose config and liquidation entrypoints; generated IDL/client impact                             | **MUST HAVE**         |
+| `tests/test_oracle.rs` (new)                                    | Oracle parsing, binding, freshness, confidence, precision                                          | **MUST HAVE**         |
+| `tests/test_pnl_margin.rs` (new)                                | Formula, rounding, boundary, overflow, margin                                                      | **MUST HAVE**         |
+| `tests/test_liquidation.rs` (new)                               | Eligibility, keeper, state/accounting atomicity, RiskState independence, bad debt                  | **MUST HAVE**         |
+| Existing Rust tests                                             | Update helpers/fixtures to declared units; preserve Phase 1–5 behavior                             | **MUST HAVE**         |
+| `docs/phase-6-implementation-plan.md`                           | Architecture decision/spec (this file)                                                             | Done; no code changes |
 
 ## 28. Phase 6A–6E breakdown
 

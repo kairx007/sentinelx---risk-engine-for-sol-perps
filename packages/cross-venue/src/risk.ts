@@ -1,4 +1,8 @@
-import type { CrossVenueRisk, CrossVenueDivergence, VenueSnapshot } from "./types.js";
+import type {
+  CrossVenueRisk,
+  CrossVenueDivergence,
+  VenueSnapshot,
+} from "./types.js";
 import type { MarketRisk, RiskLevel } from "@perps-risk/risk";
 import type { RiskThresholds } from "@perps-risk/risk";
 import {
@@ -60,9 +64,10 @@ export function calculateCrossVenueRisk(
         liquiditySpread: null,
         liquidationConcentration: null,
       },
-      riskDrivers: sorted.length === 0
-        ? ["No venue data available"]
-        : ["Single venue — no cross-venue comparison possible"],
+      riskDrivers:
+        sorted.length === 0
+          ? ["No venue data available"]
+          : ["Single venue — no cross-venue comparison possible"],
     };
   }
 
@@ -111,9 +116,8 @@ export function calculateCrossVenueRisk(
   };
 
   const ecosystemScore = weightedAverage(scores, crossVenueWeights);
-  const ecosystemLevel = ecosystemScore !== null
-    ? scoreToLevel(ecosystemScore)
-    : "low";
+  const ecosystemLevel =
+    ecosystemScore !== null ? scoreToLevel(ecosystemScore) : "low";
 
   // Collect drivers, sorted by score descending
   const driverEntries: { driver: string; score: number }[] = [

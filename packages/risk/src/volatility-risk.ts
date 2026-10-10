@@ -47,7 +47,10 @@ export function calculateVolatilityRisk(
 
   const priceChangeTable = volatilityThresholds.priceChangePercent;
   if (metrics.priceChangePercent !== null && priceChangeTable) {
-    const priceScore = scoreFromThresholds(metrics.priceChangePercent, priceChangeTable);
+    const priceScore = scoreFromThresholds(
+      metrics.priceChangePercent,
+      priceChangeTable,
+    );
     if (priceScore !== null) {
       scores.push(priceScore);
       if (priceScore >= 40) {
@@ -76,13 +79,21 @@ export function calculateVolatilityRisk(
     }
   }
 
-  if (metrics.realizedVolatilityPercent === null && metrics.priceChangePercent === null) {
-    return { score: 0, level: "low", drivers: ["Volatility data not available from this data source"] };
+  if (
+    metrics.realizedVolatilityPercent === null &&
+    metrics.priceChangePercent === null
+  ) {
+    return {
+      score: 0,
+      level: "low",
+      drivers: ["Volatility data not available from this data source"],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

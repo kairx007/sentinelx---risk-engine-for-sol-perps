@@ -12,8 +12,12 @@ export function LiveReadiness({
   const wallet = useWallet();
 
   const venues = snapshot?.venues ?? [];
-  const velocityLive = venues.some((v) => v.venue === "velocity" && v.status === "available");
-  const phoenixLive = venues.some((v) => v.venue === "phoenix" && v.status === "available");
+  const velocityLive = venues.some(
+    (v) => v.venue === "velocity" && v.status === "available",
+  );
+  const phoenixLive = venues.some(
+    (v) => v.venue === "phoenix" && v.status === "available",
+  );
   const policyAvailable = Boolean(snapshot?.policy.decision);
   const chainVerified = chainSnapshot.status === "available";
   const walletReady = Boolean(wallet.connected && wallet.publicKey);
@@ -31,28 +35,41 @@ export function LiveReadiness({
     },
     {
       label: "Off-Chain Risk Engine",
-      detail: policyAvailable ? `Policy: ${snapshot?.policy.decision?.riskLevel.toUpperCase()}` : "Feeds insufficient",
+      detail: policyAvailable
+        ? `Policy: ${snapshot?.policy.decision?.riskLevel.toUpperCase()}`
+        : "Feeds insufficient",
       ready: policyAvailable,
     },
     {
       label: "Anchor Program & PDAs",
-      detail: chainSnapshot.programId ? `Program ${chainSnapshot.programId.slice(0, 4)}…${chainSnapshot.programId.slice(-4)}` : "Program ID unconfigured",
+      detail: chainSnapshot.programId
+        ? `Program ${chainSnapshot.programId.slice(0, 4)}…${chainSnapshot.programId.slice(-4)}`
+        : "Program ID unconfigured",
       ready: Boolean(chainSnapshot.programId),
     },
     {
       label: "On-Chain RiskState",
-      detail: chainVerified ? `Nonce #${chainSnapshot.riskState?.nonce.toString()} verified` : chainSnapshot.status === "not_found" ? "Devnet ready (awaiting first publish)" : "Not available",
+      detail: chainVerified
+        ? `Nonce #${chainSnapshot.riskState?.nonce.toString()} verified`
+        : chainSnapshot.status === "not_found"
+          ? "Devnet ready (awaiting first publish)"
+          : "Not available",
       ready: chainVerified || chainSnapshot.status === "not_found",
     },
     {
       label: "Trader Wallet",
-      detail: walletReady ? `Connected: ${wallet.publicKey?.toBase58().slice(0, 4)}…` : "Not connected (read-only)",
+      detail: walletReady
+        ? `Connected: ${wallet.publicKey?.toBase58().slice(0, 4)}…`
+        : "Not connected (read-only)",
       ready: walletReady,
     },
   ];
 
   return (
-    <section className="card live-readiness-card" aria-label="System readiness checklist">
+    <section
+      className="card live-readiness-card"
+      aria-label="System readiness checklist"
+    >
       <div className="card-title">
         <div>
           <span className="mini-icon blue">🛡️</span>
@@ -62,13 +79,16 @@ export function LiveReadiness({
       </div>
 
       <p className="readiness-explainer">
-        Cryptographic and telemetry readiness across market adapters, policy orchestrator, and Solana cluster enforcement.
+        Cryptographic and telemetry readiness across market adapters, policy
+        orchestrator, and Solana cluster enforcement.
       </p>
 
       <div className="readiness-grid">
         {checks.map((check) => (
           <div key={check.label} className="readiness-item">
-            <span className={`readiness-indicator ${check.ready ? "ready" : "pending"}`}>
+            <span
+              className={`readiness-indicator ${check.ready ? "ready" : "pending"}`}
+            >
               {check.ready ? "✓" : "○"}
             </span>
             <div className="readiness-item-text">

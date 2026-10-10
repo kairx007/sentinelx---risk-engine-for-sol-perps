@@ -9,7 +9,8 @@ function mean(values: number[]): number {
 function stdDev(values: number[]): number {
   if (values.length < 2) return 0;
   const m = mean(values);
-  const variance = values.reduce((sum, v) => sum + (v - m) ** 2, 0) / values.length;
+  const variance =
+    values.reduce((sum, v) => sum + (v - m) ** 2, 0) / values.length;
   return Math.sqrt(variance);
 }
 
@@ -31,7 +32,7 @@ function extractAnnualizedFundingPct(s: VenueSnapshot): number | null {
   const period = s.metrics.fundingPeriod;
   if (rate === null || period === null || period <= 0) return null;
   const SECONDS_PER_YEAR = 365.25 * 24 * 3600;
-  return (rate * SECONDS_PER_YEAR / period) * 100; // as percent annualized
+  return ((rate * SECONDS_PER_YEAR) / period) * 100; // as percent annualized
 }
 
 /** Extracts spread percentage. */
@@ -50,9 +51,14 @@ export interface DivergenceResult {
  * Price divergence: coefficient of variation (std dev / mean) as percent.
  */
 export function priceDivergence(snapshots: VenueSnapshot[]): DivergenceResult {
-  const prices = snapshots.map(extractPrice).filter((v): v is number => v !== null);
+  const prices = snapshots
+    .map(extractPrice)
+    .filter((v): v is number => v !== null);
   if (prices.length < 2) {
-    return { value: null, driver: "Insufficient price data for cross-venue comparison" };
+    return {
+      value: null,
+      driver: "Insufficient price data for cross-venue comparison",
+    };
   }
   const m = mean(prices);
   if (m <= 0) return { value: null, driver: "Invalid price reference" };
@@ -68,10 +74,17 @@ export function priceDivergence(snapshots: VenueSnapshot[]): DivergenceResult {
 /**
  * Funding divergence: std dev of annualized percent rates.
  */
-export function fundingDivergence(snapshots: VenueSnapshot[]): DivergenceResult {
-  const rates = snapshots.map(extractAnnualizedFundingPct).filter((v): v is number => v !== null);
+export function fundingDivergence(
+  snapshots: VenueSnapshot[],
+): DivergenceResult {
+  const rates = snapshots
+    .map(extractAnnualizedFundingPct)
+    .filter((v): v is number => v !== null);
   if (rates.length < 2) {
-    return { value: null, driver: "Insufficient funding data for cross-venue comparison" };
+    return {
+      value: null,
+      driver: "Insufficient funding data for cross-venue comparison",
+    };
   }
   const deviation = stdDev(rates);
   return {
@@ -85,9 +98,14 @@ export function fundingDivergence(snapshots: VenueSnapshot[]): DivergenceResult 
  * 0 = perfectly even, 1 = all OI on one venue.
  */
 export function oiConcentration(snapshots: VenueSnapshot[]): DivergenceResult {
-  const withOi = snapshots.filter((s) => s.metrics.oi !== null && s.metrics.oi > 0);
+  const withOi = snapshots.filter(
+    (s) => s.metrics.oi !== null && s.metrics.oi > 0,
+  );
   if (withOi.length < 2) {
-    return { value: null, driver: "Insufficient OI data for cross-venue comparison" };
+    return {
+      value: null,
+      driver: "Insufficient OI data for cross-venue comparison",
+    };
   }
   const totalOi = withOi.reduce((sum, s) => sum + (s.metrics.oi ?? 0), 0);
   if (totalOi <= 0) return { value: null, driver: "Zero total open interest" };
@@ -107,9 +125,14 @@ export function oiConcentration(snapshots: VenueSnapshot[]): DivergenceResult {
 export function liquiditySpreadDivergence(
   snapshots: VenueSnapshot[],
 ): DivergenceResult {
-  const spreads = snapshots.map(extractSpread).filter((v): v is number => v !== null);
+  const spreads = snapshots
+    .map(extractSpread)
+    .filter((v): v is number => v !== null);
   if (spreads.length < 2) {
-    return { value: null, driver: "Insufficient liquidity data for cross-venue comparison" };
+    return {
+      value: null,
+      driver: "Insufficient liquidity data for cross-venue comparison",
+    };
   }
   const min = Math.min(...spreads);
   const max = Math.max(...spreads);
@@ -130,9 +153,15 @@ export function liquidationConcentration(
     (s) => s.metrics.liquidations !== null && s.metrics.liquidations > 0,
   );
   if (withLiq.length < 2) {
-    return { value: null, driver: "Insufficient liquidation data for cross-venue comparison" };
+    return {
+      value: null,
+      driver: "Insufficient liquidation data for cross-venue comparison",
+    };
   }
-  const total = withLiq.reduce((sum, s) => sum + (s.metrics.liquidations ?? 0), 0);
+  const total = withLiq.reduce(
+    (sum, s) => sum + (s.metrics.liquidations ?? 0),
+    0,
+  );
   if (total <= 0) return { value: null, driver: "Zero liquidation volume" };
   const shares = withLiq.map((s) => (s.metrics.liquidations ?? 0) / total);
   const hhi = herfindahl(shares);

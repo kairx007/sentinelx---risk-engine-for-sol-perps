@@ -73,7 +73,9 @@ export function evaluateMarketRisk(
   };
 }
 
-function collectTopDrivers(components: Record<string, RiskComponentResult>): string[] {
+function collectTopDrivers(
+  components: Record<string, RiskComponentResult>,
+): string[] {
   const entries = Object.entries(components);
   const scored: { driver: string; score: number }[] = [];
 

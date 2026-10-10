@@ -54,7 +54,8 @@ export function calculatePositioningRisk(
   }
 
   const imbalanceTable = positioningThresholds.imbalance;
-  const absImbalance = metrics.imbalance !== null ? Math.abs(metrics.imbalance) : null;
+  const absImbalance =
+    metrics.imbalance !== null ? Math.abs(metrics.imbalance) : null;
   if (absImbalance !== null && imbalanceTable) {
     const imbalanceScore = scoreFromThresholds(absImbalance, imbalanceTable);
     if (imbalanceScore !== null) {
@@ -68,12 +69,19 @@ export function calculatePositioningRisk(
   }
 
   if (metrics.longPercent === null && metrics.shortPercent === null) {
-    return { score: 0, level: "low", drivers: ["Positioning data (OI skew) not available from this data source"] };
+    return {
+      score: 0,
+      level: "low",
+      drivers: [
+        "Positioning data (OI skew) not available from this data source",
+      ],
+    };
   }
 
-  const rawScore = scores.length > 0
-    ? scores.reduce((acc, s) => acc + s, 0) / scores.length
-    : 0;
+  const rawScore =
+    scores.length > 0
+      ? scores.reduce((acc, s) => acc + s, 0) / scores.length
+      : 0;
 
   const penalty = isStale(state, now) ? STALE_DATA_SCORE_PENALTY : 0;
   const score = Math.min(100, Math.round(rawScore + penalty));

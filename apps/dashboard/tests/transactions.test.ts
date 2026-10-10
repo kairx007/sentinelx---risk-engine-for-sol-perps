@@ -13,9 +13,15 @@ import { RISK_VAULT_PROGRAM_ID } from "../../risk-publisher/src/risk-state";
 
 describe("Phase 4 Transaction Builders", () => {
   const dummyOwner = new PublicKey("11111111111111111111111111111111");
-  const dummyMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
-  const dummyMarket = new PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4SE5nv");
-  const dummyOracle = new PublicKey("7UVimffxr9ow1ukKttssAKBiNdTe2deMm98qwx5Y8NNd");
+  const dummyMint = new PublicKey(
+    "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  );
+  const dummyMarket = new PublicKey(
+    "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4SE5nv",
+  );
+  const dummyOracle = new PublicKey(
+    "7UVimffxr9ow1ukKttssAKBiNdTe2deMm98qwx5Y8NNd",
+  );
 
   it("builds an increase_position instruction with matching 8-byte discriminator and accounts", () => {
     const ix = buildIncreasePositionInstruction({
@@ -40,7 +46,9 @@ describe("Phase 4 Transaction Builders", () => {
     expect(ix.keys[0].pubkey.toBase58()).toBe(dummyOwner.toBase58());
     expect(ix.keys[0].isSigner).toBe(true);
     expect(ix.keys[8].pubkey.toBase58()).toBe(SYSVAR_CLOCK_PUBKEY.toBase58());
-    expect(ix.keys[9].pubkey.toBase58()).toBe(SystemProgram.programId.toBase58());
+    expect(ix.keys[9].pubkey.toBase58()).toBe(
+      SystemProgram.programId.toBase58(),
+    );
   });
 
   it("builds a reduce_position instruction with matching discriminator", () => {

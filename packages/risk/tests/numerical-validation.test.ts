@@ -174,13 +174,19 @@ function componentScore(risk: MarketRisk, name: string): number {
 
 afterAll(() => {
   const summary = Object.fromEntries(
-    [...results].map(([name, { risk }]) => [name, {
-      score: risk.overallScore,
-      level: risk.level,
-      topDrivers: risk.topDrivers,
-    }]),
+    [...results].map(([name, { risk }]) => [
+      name,
+      {
+        score: risk.overallScore,
+        level: risk.level,
+        topDrivers: risk.topDrivers,
+      },
+    ]),
   );
-  console.info("Risk numerical validation results:", JSON.stringify(summary, null, 2));
+  console.info(
+    "Risk numerical validation results:",
+    JSON.stringify(summary, null, 2),
+  );
 });
 
 describe("risk engine numerical validation", () => {
@@ -194,7 +200,9 @@ describe("risk engine numerical validation", () => {
     expect(componentScore(risk, "oracle")).toBe(0);
     expect(
       risk.topDrivers.some((driver) =>
-        /extreme positive|crowded|severe|widening|low effective liquidity|price deviation|stale|very high open interest/i.test(driver),
+        /extreme positive|crowded|severe|widening|low effective liquidity|price deviation|stale|very high open interest/i.test(
+          driver,
+        ),
       ),
     ).toBe(false);
   });
@@ -202,8 +210,12 @@ describe("risk engine numerical validation", () => {
   it("raises risk and identifies the deviation for an extreme price shock", () => {
     const { risk } = result("priceShock");
 
-    expect(risk.overallScore).toBeGreaterThan(result("healthy").risk.overallScore);
-    expect(risk.topDrivers.some((driver) => /deviation/i.test(driver))).toBe(true);
+    expect(risk.overallScore).toBeGreaterThan(
+      result("healthy").risk.overallScore,
+    );
+    expect(risk.topDrivers.some((driver) => /deviation/i.test(driver))).toBe(
+      true,
+    );
   });
 
   it("raises funding risk and names funding as a driver", () => {
@@ -212,18 +224,28 @@ describe("risk engine numerical validation", () => {
     expect(componentScore(risk, "funding")).toBeGreaterThan(
       componentScore(result("healthy").risk, "funding"),
     );
-    expect(risk.overallScore).toBeGreaterThan(result("healthy").risk.overallScore);
-    expect(risk.topDrivers.some((driver) => /funding/i.test(driver))).toBe(true);
+    expect(risk.overallScore).toBeGreaterThan(
+      result("healthy").risk.overallScore,
+    );
+    expect(risk.topDrivers.some((driver) => /funding/i.test(driver))).toBe(
+      true,
+    );
   });
 
   it("raises leverage and positioning risk for high, skewed open interest", () => {
     const { risk } = result("oiStress");
     const healthy = result("healthy").risk;
 
-    expect(componentScore(risk, "leverage")).toBeGreaterThan(componentScore(healthy, "leverage"));
-    expect(componentScore(risk, "positioning")).toBeGreaterThan(componentScore(healthy, "positioning"));
+    expect(componentScore(risk, "leverage")).toBeGreaterThan(
+      componentScore(healthy, "leverage"),
+    );
+    expect(componentScore(risk, "positioning")).toBeGreaterThan(
+      componentScore(healthy, "positioning"),
+    );
     expect(risk.overallScore).toBeGreaterThan(healthy.overallScore);
-    expect(risk.topDrivers.some((driver) => /positioning/i.test(driver))).toBe(true);
+    expect(risk.topDrivers.some((driver) => /positioning/i.test(driver))).toBe(
+      true,
+    );
   });
 
   it("raises liquidity risk and identifies constrained depth", () => {
@@ -232,8 +254,12 @@ describe("risk engine numerical validation", () => {
     expect(componentScore(risk, "liquidity")).toBeGreaterThan(
       componentScore(result("healthy").risk, "liquidity"),
     );
-    expect(risk.overallScore).toBeGreaterThan(result("healthy").risk.overallScore);
-    expect(risk.topDrivers.some((driver) => /liquidity/i.test(driver))).toBe(true);
+    expect(risk.overallScore).toBeGreaterThan(
+      result("healthy").risk.overallScore,
+    );
+    expect(risk.topDrivers.some((driver) => /liquidity/i.test(driver))).toBe(
+      true,
+    );
   });
 
   it("raises liquidation risk and identifies liquidation volume", () => {
@@ -242,8 +268,12 @@ describe("risk engine numerical validation", () => {
     expect(componentScore(risk, "liquidation")).toBeGreaterThan(
       componentScore(result("healthy").risk, "liquidation"),
     );
-    expect(risk.overallScore).toBeGreaterThan(result("healthy").risk.overallScore);
-    expect(risk.topDrivers.some((driver) => /liquidation/i.test(driver))).toBe(true);
+    expect(risk.overallScore).toBeGreaterThan(
+      result("healthy").risk.overallScore,
+    );
+    expect(risk.topDrivers.some((driver) => /liquidation/i.test(driver))).toBe(
+      true,
+    );
   });
 
   it("handles an unavailable oracle without replacing null with zero", () => {
@@ -265,7 +295,9 @@ describe("risk engine numerical validation", () => {
     expect(state.oracle.price).toBeNull();
     expect(metrics.funding.currentFunding).toBeNull();
     expect(metrics.liquidation.totalVolume).toBeNull();
-    expect(risk.overallScore).toBeLessThanOrEqual(result("healthy").risk.overallScore);
+    expect(risk.overallScore).toBeLessThanOrEqual(
+      result("healthy").risk.overallScore,
+    );
     expect(Number.isFinite(risk.overallScore)).toBe(true);
   });
 
@@ -275,7 +307,9 @@ describe("risk engine numerical validation", () => {
       (component) => component.score >= 50,
     );
 
-    expect(risk.overallScore).toBeGreaterThan(result("healthy").risk.overallScore);
+    expect(risk.overallScore).toBeGreaterThan(
+      result("healthy").risk.overallScore,
+    );
     expect(["medium", "high", "critical"]).toContain(risk.level);
     expect(elevatedComponents.length).toBeGreaterThanOrEqual(3);
     expect(risk.topDrivers.length).toBeGreaterThanOrEqual(3);

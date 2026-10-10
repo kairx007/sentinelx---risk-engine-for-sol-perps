@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { PublicKey } from "@solana/web3.js";
 
 export interface WalletAdapter {
@@ -20,7 +26,9 @@ const WalletContext = createContext<WalletContextType | null>(null);
 interface PhantomProvider {
   isPhantom?: boolean;
   publicKey?: { toBase58(): string; toBuffer(): Buffer };
-  connect(opts?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toBase58(): string } }>;
+  connect(opts?: {
+    onlyIfTrusted?: boolean;
+  }): Promise<{ publicKey: { toBase58(): string } }>;
   disconnect(): Promise<void>;
   signTransaction?(transaction: any): Promise<any>;
   on?(event: string, callback: (...args: any[]) => void): void;
@@ -104,7 +112,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         // Not eagerly connected; expected behavior
       });
 
-    const handleAccountChange = (newPublicKey: { toBase58(): string } | null) => {
+    const handleAccountChange = (
+      newPublicKey: { toBase58(): string } | null,
+    ) => {
       if (newPublicKey) {
         setPublicKey(new PublicKey(newPublicKey.toBase58()));
         setConnected(true);
@@ -132,7 +142,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     async (transaction: any) => {
       const provider = getProvider();
       if (!provider?.signTransaction) {
-        throw new Error("Connected wallet does not support signing transactions");
+        throw new Error(
+          "Connected wallet does not support signing transactions",
+        );
       }
       return provider.signTransaction(transaction);
     },
