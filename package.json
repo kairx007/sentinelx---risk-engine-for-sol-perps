@@ -9,6 +9,8 @@
     "packages/adapters/*"
   ],
   "scripts": {
+    "dev": "PORT=3000 bun apps/api/src/index.ts & bun run --cwd apps/dashboard dev",
+    "api:dev": "PORT=3000 bun apps/api/src/index.ts",
     "typecheck": "tsc --noEmit",
     "check": "bun run typecheck && bun run test:unit && bun run test:integration",
     "test:unit": "bun x vitest run packages",
