@@ -6,6 +6,9 @@ import { OnChainRiskState } from "./components/OnChainRiskState";
 import { WalletProvider } from "./solana/wallet";
 import { WalletConnect } from "./components/WalletConnect";
 import { UserTransactionPanel } from "./components/UserTransactionPanel";
+import { LiveReadiness } from "./components/LiveReadiness";
+import { ProtocolFlow } from "./components/ProtocolFlow";
+import { EventTimeline } from "./components/EventTimeline";
 
 type View = "Ecosystem" | "Market" | "Contagion";
 type Venue = DashboardSnapshot["venues"][number];
@@ -973,11 +976,14 @@ function DashboardContent() {
             )}
             {view === "Ecosystem" && (
               <>
+                <LiveReadiness snapshot={snapshot} chainSnapshot={chainSnapshot} />
+                <ProtocolFlow snapshot={snapshot} chainSnapshot={chainSnapshot} />
                 <OnChainRiskState
                   snapshot={chainSnapshot}
                   decision={snapshot?.policy.decision ?? null}
                 />
                 <UserTransactionPanel chainSnapshot={chainSnapshot} />
+                <EventTimeline />
               </>
             )}
             <footer className="footer">
