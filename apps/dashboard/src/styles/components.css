@@ -1,0 +1,80 @@
+.snapshot-notice {
+  padding: 10px 13px;
+  margin: 0 0 16px;
+  border: 1px solid #e8ece9;
+  border-radius: 7px;
+  font-size: 10px;
+}
+.notice-loading {
+  color: #6f7c74;
+  background: #fff;
+}
+.notice-error {
+  color: #ad5542;
+  border-color: #f1ddd7;
+  background: #fff8f6;
+}
+.notice-stale {
+  color: #987436;
+  border-color: #eee4cd;
+  background: #fdfaf2;
+}
+.unavailable-chart {
+  display: flex;
+  height: 57px;
+  align-items: center;
+  justify-content: center;
+  color: #9ba49e;
+  font-size: 9px;
+}
+.empty-state {
+  padding: 18px;
+  color: #909b94;
+  text-align: center;
+  font-size: 10px;
+}
+.empty-state.compact {
+  padding: 16px 0 4px;
+  text-align: left;
+}
+.metric-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid #f0f2f0;
+  color: #87928b;
+  font-size: 9px;
+}
+.metric-line strong {
+  color: #45534a;
+  font-size: 10px;
+  font-weight: 600;
+}
+.status-dot-offline {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c18c54;
+  box-shadow: 0 0 0 3px #f7f0e6;
+}
+.badge-critical {
+  color: #a5443f;
+  background: #f8e9e7;
+}
+.policy-card {
+  margin-top: 14px;
+  padding-bottom: 13px;
+}
+.policy-values {
+  margin-top: 10px;
+}
+.policy-note {
+  padding-top: 10px;
+  margin: 8px 0 0;
+  border-top: 1px solid #f0f2f0;
+  color: #8e9992;
+  font-size: 9px;
+}

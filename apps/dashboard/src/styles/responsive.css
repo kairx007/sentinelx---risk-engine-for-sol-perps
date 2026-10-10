@@ -1,0 +1,267 @@
+@media (min-width: 1500px) {
+  .content {
+    padding-top: 40px;
+  }
+  .content-inner {
+    max-width: 1210px;
+  }
+}
+@media (max-width: 1100px) {
+  .sidebar {
+    width: 210px;
+  }
+  .main-shell {
+    margin-left: 210px;
+  }
+  .content {
+    padding-right: 23px;
+    padding-left: 23px;
+  }
+  .table-head,
+  .venue-row {
+    grid-template-columns: 1.05fr 1.2fr 0.9fr 0.8fr 0.78fr 1fr;
+    column-gap: 7px;
+  }
+  .risk-cell {
+    gap: 5px;
+  }
+  .risk-cell .risk-bar {
+    width: 30px;
+  }
+  .risk-cell .badge {
+    display: none;
+  }
+}
+@media (max-width: 820px) {
+  .sidebar {
+    width: 64px;
+    align-items: center;
+    padding: 18px 8px 12px;
+  }
+  .brand {
+    margin: 0 0 30px;
+  }
+  .brand > span:last-child,
+  .side-label,
+  .nav-item > span,
+  .nav-alert,
+  .market-nav > span:not(:first-child),
+  .connection > span:nth-child(2),
+  .connection > svg,
+  .profile > span:not(:first-child) {
+    display: none;
+  }
+  .brand-mark {
+    width: 37px;
+    height: 37px;
+  }
+  .side-nav {
+    width: 100%;
+  }
+  .nav-item {
+    justify-content: center;
+    padding: 0;
+  }
+  .market-nav {
+    padding: 8px 0;
+  }
+  .connection {
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .profile {
+    justify-content: center;
+    padding: 10px 0 0;
+  }
+  .main-shell {
+    margin-left: 64px;
+  }
+  .topbar {
+    padding: 0 20px;
+  }
+  .content {
+    padding: 25px 20px;
+  }
+  .hero-card {
+    padding: 23px 21px;
+  }
+  .hero-score {
+    grid-template-columns: 95px 1fr;
+    gap: 9px;
+  }
+  .risk-gauge {
+    width: 92px;
+    height: 92px;
+    border-width: 5px;
+  }
+  .gauge-number {
+    font-size: 25px;
+  }
+  .table-head,
+  .venue-row {
+    grid-template-columns: 1.1fr 1fr 0.9fr 0.85fr;
+  }
+  .table-head span:nth-child(4),
+  .table-head span:nth-child(5),
+  .venue-row > *:nth-child(4),
+  .venue-row > *:nth-child(5) {
+    display: none;
+  }
+  .market-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .flow-node {
+    padding: 9px;
+  }
+  .flow-connector {
+    flex: 0.23;
+  }
+  .flow-connector span {
+    font-size: 5px;
+  }
+}
+@media (max-width: 580px) {
+  .topbar {
+    height: 52px;
+    padding: 0 13px;
+  }
+  .topbar-actions {
+    gap: 7px;
+  }
+  .network-pill {
+    padding: 6px 7px;
+    font-size: 8px;
+  }
+  .content {
+    padding: 22px 13px;
+  }
+  .page-heading h1 {
+    font-size: 21px;
+  }
+  .page-subtitle {
+    font-size: 10px;
+  }
+  .hero-card {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+  .hero-copy h2 {
+    font-size: 21px;
+  }
+  .hero-score {
+    grid-template-columns: 100px 1fr;
+    padding-left: 0;
+  }
+  .risk-gauge {
+    width: 94px;
+    height: 94px;
+  }
+  .hero-score {
+    max-width: 310px;
+  }
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .table-head,
+  .venue-row {
+    grid-template-columns: 1fr 1fr 0.9fr;
+    padding-right: 10px;
+    padding-left: 10px;
+    column-gap: 5px;
+  }
+  .table-head span:nth-child(3),
+  .venue-row > *:nth-child(3),
+  .table-head span:nth-child(6),
+  .venue-row > *:nth-child(6) {
+    display: none;
+  }
+  .risk-cell .risk-bar {
+    width: 35px;
+  }
+  .venue-row {
+    min-height: 57px;
+  }
+  .venue-name {
+    gap: 6px;
+  }
+  .venue-logo {
+    width: 26px;
+    height: 26px;
+  }
+  .market-summary-grid {
+    gap: 8px;
+  }
+  .market-risk-card,
+  .metric-card {
+    min-height: 116px;
+    padding: 12px;
+  }
+  .metric-card > strong {
+    font-size: 18px;
+  }
+  .component-grid {
+    gap: 8px;
+  }
+  .component-card {
+    padding: 12px;
+  }
+  .component-card p {
+    line-height: 1.5;
+  }
+  .contagion-banner {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .contagion-banner h2 {
+    font-size: 15px;
+  }
+  .severity {
+    padding: 8px 10px;
+  }
+  .flow-chain {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .flow-item {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flow-node {
+    width: 100%;
+  }
+  .flow-connector {
+    min-height: 34px;
+    flex-direction: row;
+    justify-content: center;
+    transform: rotate(90deg);
+  }
+  .flow-connector i {
+    width: 22px;
+  }
+  .flow-connector span {
+    display: none;
+  }
+  .event-table {
+    overflow-x: auto;
+  }
+  .event-head,
+  .event-row {
+    min-width: 590px;
+  }
+  .footer {
+    gap: 10px;
+    font-size: 7px;
+  }
+  .footer span:last-child {
+    text-align: right;
+  }
+  .search-panel {
+    right: 14px;
+    width: min(330px, calc(100vw - 90px));
+  }
+}
+
