@@ -2,7 +2,6 @@ import "../polyfills.js";
 import {
   PublicKey,
   TransactionInstruction,
-  Transaction,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
