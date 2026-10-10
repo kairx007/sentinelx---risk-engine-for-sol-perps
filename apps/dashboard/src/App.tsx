@@ -475,20 +475,11 @@ function MarketView({
               : "No venue data available"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div className="venue-tab-bar">
           {(snapshot?.venues ?? []).map((item) => (
             <button
               key={item.venue}
-              className={`button ${selected?.venue === item.venue ? "button-primary" : "button-secondary"}`}
-              style={{
-                padding: "8px 16px",
-                fontSize: "13px",
-                cursor: "pointer",
-                borderRadius: "6px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
+              className={`venue-tab-button ${selected?.venue === item.venue ? "selected" : ""}`}
               onClick={() => onSelectVenue?.(item.venue)}
             >
               <span className={`venue-logo logo-${item.venue.slice(0, 2)}`}>

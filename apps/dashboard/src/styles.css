@@ -2424,6 +2424,44 @@ a:focus-visible {
   text-decoration: underline;
 }
 
+.venue-tab-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.venue-tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid #e1e7e3;
+  border-radius: 7px;
+  background: white;
+  color: #3b4b42;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.venue-tab-button:hover {
+  background: #f7faf8;
+  border-color: #cbd7d0;
+}
+
+.venue-tab-button.selected {
+  background: #edf6f1;
+  border-color: #2e8a60;
+  color: #1a5e3f;
+  box-shadow: 0 1px 3px rgba(46, 138, 96, 0.12);
+}
+
+.venue-tab-button.selected .venue-logo {
+  background: #2e8a60;
+  color: white;
+}
+
 @media (max-width: 820px) {
   .readiness-grid {
     grid-template-columns: 1fr;

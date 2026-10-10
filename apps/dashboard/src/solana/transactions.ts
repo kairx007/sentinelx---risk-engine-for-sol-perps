@@ -92,13 +92,13 @@ export function buildIncreasePositionInstruction(
   params: BuildIncreasePositionParams,
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
-  const [vault] = deriveVaultAddress(params.collateralMint, programId);
+  const [vault] = deriveVaultAddress(params.collateralMint);
   const [userVaultAccount] = deriveUserVaultAddress(
     vault,
     params.owner,
     programId,
   );
-  const [riskState] = deriveRiskStateAddress(vault, programId);
+  const [riskState] = deriveRiskStateAddress(vault);
   const [marketConfig] = deriveMarketConfigAddress(
     vault,
     params.market,
@@ -153,7 +153,7 @@ export function buildReducePositionInstruction(
   params: BuildReducePositionParams,
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
-  const [vault] = deriveVaultAddress(params.collateralMint, programId);
+  const [vault] = deriveVaultAddress(params.collateralMint);
   const [userVaultAccount] = deriveUserVaultAddress(
     vault,
     params.owner,
@@ -207,7 +207,7 @@ export function buildClosePositionInstruction(
   params: BuildClosePositionParams,
 ): TransactionInstruction {
   const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
-  const [vault] = deriveVaultAddress(params.collateralMint, programId);
+  const [vault] = deriveVaultAddress(params.collateralMint);
   const [userVaultAccount] = deriveUserVaultAddress(
     vault,
     params.owner,

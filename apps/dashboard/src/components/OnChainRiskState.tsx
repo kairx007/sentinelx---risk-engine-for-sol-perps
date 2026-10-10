@@ -309,9 +309,9 @@ export function OnChainRiskState({
               </strong>
             </div>
             <span className="chain-metric-subtext">
-              {contagionState === "contained"
+              {contagionState === "NONE" || contagionState === "ISOLATED"
                 ? "Low systemic spillover risk"
-                : contagionState === "emerging"
+                : contagionState === "DEVELOPING"
                   ? "Elevated market fragility"
                   : "Active systemic contagion"}
             </span>

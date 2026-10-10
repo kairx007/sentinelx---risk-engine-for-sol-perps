@@ -9,6 +9,17 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["apps/**/*.ts", "packages/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": [
+    "apps/api/**/*.ts",
+    "apps/risk-publisher/**/*.ts",
+    "apps/types/**/*.ts",
+    "packages/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "apps/dashboard"
+  ]
 }

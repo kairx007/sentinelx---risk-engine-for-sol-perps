@@ -30,11 +30,12 @@
     "dashboard:typecheck": "bun run --cwd apps/dashboard typecheck"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
     "@perps-risk/cross-venue": "workspace:*",
     "@perps-risk/metrics": "workspace:*",
     "@perps-risk/risk": "workspace:*",
     "@perps-risk/types": "workspace:*",
-    "@eslint/js": "^9.0.0",
+    "@types/node": "20",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "typescript": "^5.9.0",

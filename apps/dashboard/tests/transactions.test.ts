@@ -1,3 +1,5 @@
+// @vitest-environment node
+import "../src/polyfills";
 import { describe, expect, it } from "vitest";
 import { PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY } from "@solana/web3.js";
 import {
@@ -43,10 +45,10 @@ describe("Phase 4 Transaction Builders", () => {
     expect(ix.data.readBigUInt64LE(25)).toBe(50_000_000n);
 
     // Verify key accounts: owner signer, system program, clock
-    expect(ix.keys[0].pubkey.toBase58()).toBe(dummyOwner.toBase58());
-    expect(ix.keys[0].isSigner).toBe(true);
-    expect(ix.keys[8].pubkey.toBase58()).toBe(SYSVAR_CLOCK_PUBKEY.toBase58());
-    expect(ix.keys[9].pubkey.toBase58()).toBe(
+    expect(ix.keys[0]?.pubkey.toBase58()).toBe(dummyOwner.toBase58());
+    expect(ix.keys[0]?.isSigner).toBe(true);
+    expect(ix.keys[8]?.pubkey.toBase58()).toBe(SYSVAR_CLOCK_PUBKEY.toBase58());
+    expect(ix.keys[9]?.pubkey.toBase58()).toBe(
       SystemProgram.programId.toBase58(),
     );
   });
