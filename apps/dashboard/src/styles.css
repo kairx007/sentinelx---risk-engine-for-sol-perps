@@ -55,7 +55,65 @@ button:focus-visible,a:focus-visible { outline: 2px solid #39865f; outline-offse
 .policy-card { margin-top: 14px; padding-bottom: 13px; }
 .policy-values { margin-top: 10px; }
 .policy-note { padding-top: 10px; margin: 8px 0 0; border-top: 1px solid #f0f2f0; color: #8e9992; font-size: 9px; }
-.chain-state-card { margin-top: 14px; padding-bottom: 14px; }
+.chain-state-card { margin-top: 18px; padding: 22px 24px; }
+.chain-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.chain-header-left { display: flex; align-items: flex-start; gap: 12px; }
+.chain-title-row { display: flex; align-items: center; gap: 9px; }
+.chain-title-row h2 { margin: 0; font-size: 14px; font-weight: 650; color: #222e28; letter-spacing: -0.2px; }
+.chain-network-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 4px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; background: #edf2ee; color: #526359; }
+.chain-cluster-dot { width: 5px; height: 5px; border-radius: 50%; }
+.chain-subtitle { margin: 3px 0 0; color: #8a968f; font-size: 10px; }
+.chain-header-right { display: flex; align-items: center; }
+
+.chain-banner { display: flex; align-items: center; gap: 11px; padding: 10px 14px; border-radius: 7px; margin-bottom: 16px; font-size: 10px; line-height: 1.5; }
+.chain-banner p { margin: 0; color: #5a6660; }
+.chain-banner p strong { color: #27362d; }
+.chain-banner-badge { flex-shrink: 0; font-size: 8px; font-weight: 750; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 4px; }
+.chain-banner-success { background: #f1f7f3; border: 1px solid #d9ebdf; }
+.chain-banner-success .chain-banner-badge { background: #237b56; color: white; }
+.chain-banner-info { background: #f4f8fb; border: 1px solid #dae7f2; }
+.chain-banner-info .chain-banner-badge { background: #3c77a8; color: white; }
+.chain-banner-warning { background: #fdfaf2; border: 1px solid #f2e7cc; }
+.chain-banner-warning .chain-banner-badge { background: #b58d3b; color: white; }
+.chain-banner-neutral { background: #f7f9f7; border: 1px solid #e7ebe8; }
+.chain-banner-neutral .chain-banner-badge { background: #76837c; color: white; }
+
+.chain-metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; margin-bottom: 18px; }
+.chain-metric-card { display: flex; flex-direction: column; justify-content: space-between; padding: 12px 14px; border: 1px solid #edf1ee; border-radius: 7px; background: #fafbfa; min-height: 78px; }
+.chain-metric-label { color: #8c9790; font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.chain-metric-value-row { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 2px; }
+.chain-metric-score { color: #26352c; font-size: 15px; font-weight: 650; letter-spacing: -0.3px; }
+.chain-metric-score-denom { color: #26352c; font-size: 12px; font-weight: 600; }
+.chain-metric-score-denom span { color: #9aa39c; font-size: 9px; font-weight: 450; }
+.chain-metric-subtext { color: #8c9790; font-size: 8.5px; line-height: 1.35; margin-top: 4px; }
+
+.chain-accounts-section { padding-top: 15px; border-top: 1px solid #eef2ef; }
+.chain-accounts-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.chain-accounts-title-row h3 { margin: 0; color: #415147; font-size: 11px; font-weight: 650; letter-spacing: -0.1px; }
+.chain-security-badge { display: inline-flex; align-items: center; gap: 5px; color: #398259; background: #edf6f0; padding: 2px 7px; border-radius: 4px; font-size: 8px; font-weight: 650; }
+
+.chain-accounts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 9px; }
+.chain-account-card { display: flex; flex-direction: column; justify-content: space-between; padding: 10px 12px; border: 1px solid #e9edea; border-radius: 6px; background: white; }
+.chain-account-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.chain-account-label { color: #3b4941; font-size: 9.5px; font-weight: 600; }
+.chain-account-derivation { color: #9aa39c; font-size: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.chain-account-value { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chain-address-code { color: #4a5951; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; background: #f2f5f3; padding: 3px 6px; border-radius: 4px; border: 1px solid #e5ebe7; letter-spacing: 0.3px; }
+.chain-account-actions { display: flex; align-items: center; gap: 4px; }
+.chain-icon-btn { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #e5eae7; border-radius: 4px; background: white; color: #738078; cursor: pointer; text-decoration: none; padding: 0; transition: all 0.15s ease; }
+.chain-icon-btn:hover { background: #f1f5f2; color: #237b56; border-color: #cbd8d0; }
+.chain-icon-btn.copied { width: auto; padding: 0 6px; background: #edf6f0; border-color: #badfc7; }
+.chain-copied-badge { color: #237b56; font-size: 8px; font-weight: 700; }
+.chain-not-derived { color: #a4aea7; font-size: 9px; font-style: italic; }
+
+.chain-card-footer { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; margin-top: 14px; border-top: 1px solid #eef2ef; }
+.chain-diagnostics-items { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.chain-diag-item { display: flex; align-items: center; gap: 6px; font-size: 9px; }
+.chain-diag-item span { color: #929d96; font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+.chain-diag-item strong { color: #425147; font-weight: 600; }
+.chain-footer-note { margin: 0; color: #949f98; font-size: 8.5px; line-height: 1.4; }
+
+/* Legacy aliases for compatibility */
 .chain-explainer { margin: 9px 0 2px; color: #84908b; font-size: 10px; line-height: 1.6; }
 .chain-values { margin-top: 8px; }
 .chain-message { margin-top: 7px; color: #7f8982; }
@@ -64,3 +122,50 @@ button:focus-visible,a:focus-visible { outline: 2px solid #39865f; outline-offse
 .chain-meta dt { margin-bottom: 4px; color: #9aa39d; font-size: 8px; text-transform: uppercase; letter-spacing: .45px; }
 .chain-meta dd { overflow: hidden; margin: 0; color: #59665e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .chain-meta-secondary { margin-top: 10px; }
+
+@media (max-width: 900px) {
+  .chain-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 580px) {
+  .chain-state-card { padding: 16px; }
+  .chain-metrics-grid { grid-template-columns: 1fr; }
+  .chain-accounts-grid { grid-template-columns: 1fr; }
+  .chain-card-header { flex-direction: column; gap: 10px; }
+}
+
+/* Phase 4: Wallet & Transaction Panel */
+.wallet-connect-wrapper { display: flex; align-items: center; }
+.wallet-connected-pill { display: flex; align-items: center; gap: 8px; padding: 5px 9px; border: 1px solid #d4dfd8; border-radius: 6px; background: #f2f7f4; font-size: 10px; }
+.wallet-name { font-weight: 650; color: #237b56; }
+.wallet-address { font-family: ui-monospace, monospace; color: #516258; font-size: 9.5px; }
+.wallet-disconnect-btn { border: 0; background: transparent; color: #8fa096; font-size: 13px; cursor: pointer; padding: 0 2px; }
+.wallet-disconnect-btn:hover { color: #b95f3c; }
+.wallet-connect-btn { height: 30px; font-size: 9.5px; padding: 0 10px; margin-top: 0; }
+
+.user-tx-card { margin-top: 18px; padding: 22px 24px; }
+.tx-tabs { display: flex; gap: 6px; margin: 16px 0 14px; border-bottom: 1px solid #edf1ee; padding-bottom: 8px; }
+.tx-tab { padding: 6px 12px; border: 0; border-radius: 5px; background: transparent; color: #728078; font-size: 10.5px; font-weight: 600; cursor: pointer; }
+.tx-tab:hover { background: #f3f6f4; }
+.tx-tab.selected { background: #237b56; color: white; }
+.tx-form { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.side-selector { display: flex; gap: 8px; }
+.side-btn { flex: 1; padding: 7px; border: 1px solid #e1e7e3; border-radius: 6px; background: #fafbfa; font-size: 10px; font-weight: 700; cursor: pointer; }
+.side-btn.long.active { background: #edf7f1; border-color: #398259; color: #237b56; }
+.side-btn.short.active { background: #fdf2eb; border-color: #df824b; color: #b95f3c; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.input-row label { display: block; font-size: 9px; font-weight: 650; color: #6d7b73; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+.input-row input { width: 100%; height: 34px; padding: 0 10px; border: 1px solid #e1e7e3; border-radius: 6px; font-size: 11px; font-weight: 600; color: #25332b; background: white; }
+.input-row input:focus { border-color: #237b56; outline: none; }
+.leverage-indicator-row { display: flex; align-items: baseline; gap: 8px; font-size: 11px; padding: 8px 10px; background: #fafbfa; border: 1px solid #edf1ee; border-radius: 6px; }
+.leverage-safe { color: #237b56; font-size: 13px; }
+.leverage-breached { color: #ad5542; font-size: 13px; }
+.cap-label { color: #8a968f; font-size: 9.5px; }
+.leverage-warning-callout { padding: 9px 12px; background: #fdf5f3; border: 1px solid #f6d8d0; border-radius: 6px; color: #a5443f; font-size: 9.5px; line-height: 1.45; }
+.tx-note { margin: 4px 0 0; color: #849189; font-size: 9.5px; line-height: 1.45; }
+.tx-status-notice { padding: 8px 12px; background: #f2f7f4; border: 1px solid #cce2d5; border-radius: 6px; color: #237b56; font-size: 9.5px; font-weight: 600; word-break: break-all; }
+.tx-error-notice { padding: 8px 12px; background: #fff5f3; border: 1px solid #f6d2ca; border-radius: 6px; color: #ad5542; font-size: 9.5px; word-break: break-all; }
+.tx-actions { margin-top: 14px; }
+.tx-submit-btn { width: 100%; height: 36px; font-size: 11px; font-weight: 650; margin-top: 0; }
+.tx-submit-btn:disabled { background: #d7e0db; border-color: #d7e0db; color: #839189; cursor: not-allowed; }
+
+

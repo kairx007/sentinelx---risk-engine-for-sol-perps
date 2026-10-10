@@ -3,6 +3,9 @@ import type { DashboardSnapshot } from "../../../packages/api-contracts/src/dash
 import { useDashboardSnapshot } from "./hooks/useDashboardSnapshot";
 import { useOnChainRiskState } from "./hooks/useOnChainRiskState";
 import { OnChainRiskState } from "./components/OnChainRiskState";
+import { WalletProvider } from "./solana/wallet";
+import { WalletConnect } from "./components/WalletConnect";
+import { UserTransactionPanel } from "./components/UserTransactionPanel";
 
 type View = "Ecosystem" | "Market" | "Contagion";
 type Venue = DashboardSnapshot["venues"][number];
@@ -786,7 +789,7 @@ function ContagionView({ snapshot }: { snapshot: DashboardSnapshot | null }) {
   );
 }
 
-export function App() {
+function DashboardContent() {
   const [view, setView] = useState<View>("Ecosystem");
   const [selectedVenue, setSelectedVenue] = useState<string>("phoenix");
   const [search, setSearch] = useState(false);
@@ -919,6 +922,7 @@ export function App() {
                     : "OFFLINE"}
               </span>
             </div>
+            <WalletConnect />
             <button
               className="icon-button search-button"
               aria-label="Open market search"
@@ -968,10 +972,13 @@ export function App() {
               <ContagionView snapshot={snapshot} />
             )}
             {view === "Ecosystem" && (
-              <OnChainRiskState
-                snapshot={chainSnapshot}
-                decision={snapshot?.policy.decision ?? null}
-              />
+              <>
+                <OnChainRiskState
+                  snapshot={chainSnapshot}
+                  decision={snapshot?.policy.decision ?? null}
+                />
+                <UserTransactionPanel chainSnapshot={chainSnapshot} />
+              </>
             )}
             <footer className="footer">
               <span>
@@ -990,4 +997,13 @@ export function App() {
   );
 }
 
+export function App() {
+  return (
+    <WalletProvider>
+      <DashboardContent />
+    </WalletProvider>
+  );
+}
+
 export default App;
+
