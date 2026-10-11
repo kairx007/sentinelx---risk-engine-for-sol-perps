@@ -37,9 +37,111 @@ export const INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR = Buffer.from([
   10, 106, 178, 52, 164, 91, 108, 69,
 ]);
 
+// deposit: [242, 35, 198, 137, 82, 225, 242, 182]
+export const DEPOSIT_DISCRIMINATOR = Buffer.from([
+  242, 35, 198, 137, 82, 225, 242, 182,
+]);
+
+export const TOKEN_PROGRAM_ID = new PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+);
+export const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+);
+
+export function getAssociatedTokenAddressSync(
+  mint: PublicKey,
+  owner: PublicKey,
+): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )[0];
+}
+
+export function decodeUserVaultAccount(data: Buffer): {
+  owner: PublicKey;
+  vault: PublicKey;
+  shares: bigint;
+  lockedCollateral: bigint;
+  settlementReserved: bigint;
+  bump: number;
+} {
+  // Layout: discriminator(8) + owner(32) + vault(32) + shares(8) + locked_collateral(8) + settlement_reserved(8) + bump(1)
+  return {
+    owner: new PublicKey(data.subarray(8, 40)),
+    vault: new PublicKey(data.subarray(40, 72)),
+    shares: data.readBigUInt64LE(72),
+    lockedCollateral: data.readBigUInt64LE(80),
+    settlementReserved: data.readBigUInt64LE(88),
+    bump: data.readUInt8(96),
+  };
+}
+
+export function createAssociatedTokenAccountInstruction(
+  payer: PublicKey,
+  associatedToken: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+): TransactionInstruction {
+  const SYSVAR_RENT_PUBKEY = new PublicKey(
+    "SysvarRent111111111111111111111111111111111",
+  );
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: associatedToken, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+    ],
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    data: Buffer.alloc(0),
+  });
+}
+
 export enum PositionSide {
   Long = 0,
   Short = 1,
+}
+
+export function parsePythPriceUpdateV2(data: Buffer): {
+  normalizedPrice: bigint;
+  publishTime: bigint;
+} {
+  // Pyth PriceUpdateV2 binary memory layout:
+  // discriminator: 8 bytes (0..8)
+  // write_authority: 32 bytes (8..40)
+  // verification_level: 1 byte (40..41)
+  // price_message:
+  //   feed_id: 32 bytes (41..73)
+  //   price: i64 (73..81)
+  //   conf: u64 (81..89)
+  //   exponent: i32 (89..93)
+  //   publish_time: i64 (93..101)
+  const rawPrice = data.readBigInt64LE(73);
+  const exponent = data.readInt32LE(89);
+  const publishTime = data.readBigInt64LE(93);
+
+  const scaleDelta = exponent + 6;
+  let normalizedPrice: bigint;
+  if (scaleDelta >= 0) {
+    normalizedPrice = rawPrice * 10n ** BigInt(scaleDelta);
+  } else {
+    normalizedPrice = rawPrice / 10n ** BigInt(-scaleDelta);
+  }
+
+  return { normalizedPrice, publishTime };
+}
+
+export function notionalForSize(
+  sizeDelta: bigint,
+  normalizedPrice: bigint,
+): bigint {
+  const QUANTITY_SCALE = 1_000_000n;
+  return (sizeDelta * normalizedPrice) / QUANTITY_SCALE;
 }
 
 export function deriveUserVaultAddress(
@@ -277,6 +379,54 @@ export function buildInitializeUserVaultAccountInstruction(
     { pubkey: vault, isSigner: false, isWritable: false },
     { pubkey: userVaultAccount, isSigner: false, isWritable: true },
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+  ];
+
+  return new TransactionInstruction({
+    keys,
+    programId,
+    data,
+  });
+}
+
+export interface BuildDepositParams {
+  owner: PublicKey;
+  collateralMint: PublicKey;
+  amount: bigint;
+  programId?: PublicKey;
+}
+
+export function buildDepositInstruction(
+  params: BuildDepositParams,
+): TransactionInstruction {
+  const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
+  const [vault] = deriveVaultAddress(params.collateralMint);
+  const [userVaultAccount] = deriveUserVaultAddress(
+    vault,
+    params.owner,
+    programId,
+  );
+  const userTokenAccount = getAssociatedTokenAddressSync(
+    params.collateralMint,
+    params.owner,
+  );
+  const vaultTokenAccount = getAssociatedTokenAddressSync(
+    params.collateralMint,
+    vault,
+  );
+
+  // Layout: discriminator(8) + amount(8) = 16 bytes
+  const data = Buffer.alloc(8 + 8);
+  DEPOSIT_DISCRIMINATOR.copy(data, 0);
+  data.writeBigUInt64LE(params.amount, 8);
+
+  const keys = [
+    { pubkey: params.owner, isSigner: true, isWritable: false },
+    { pubkey: vault, isSigner: false, isWritable: true },
+    { pubkey: params.collateralMint, isSigner: false, isWritable: false },
+    { pubkey: userVaultAccount, isSigner: false, isWritable: true },
+    { pubkey: userTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: vaultTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
   ];
 
   return new TransactionInstruction({

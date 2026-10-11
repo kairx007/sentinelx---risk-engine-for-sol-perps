@@ -7,7 +7,13 @@ import {
   buildReducePositionInstruction,
   buildClosePositionInstruction,
   buildInitializeUserVaultAccountInstruction,
+  buildDepositInstruction,
   deriveUserVaultAddress,
+  decodeUserVaultAccount,
+  getAssociatedTokenAddressSync,
+  createAssociatedTokenAccountInstruction,
+  parsePythPriceUpdateV2,
+  notionalForSize,
   PositionSide,
 } from "../solana/transactions";
 import { deriveVaultAddress } from "../../../risk-publisher/src/risk-state";
@@ -24,9 +30,10 @@ export function UserTransactionPanel({
   const wallet = useWallet();
   const formId = useId();
 
-  const [activeTab, setActiveTab] = useState<"increase" | "reduce" | "close">(
-    "increase",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "deposit" | "increase" | "reduce" | "close"
+  >("increase");
+  const [depositAmount, setDepositAmount] = useState("100.0");
   const [side, setSide] = useState<PositionSide>(PositionSide.Long);
   const [sizeSol, setSizeSol] = useState("1.0");
   const [collateralUsdc, setCollateralUsdc] = useState("50.0");
@@ -69,10 +76,63 @@ export function UserTransactionPanel({
       const market = new PublicKey(DEFAULT_SOL_PERP_MARKET);
       const oracleUpdateAccount = new PublicKey(DEFAULT_PYTH_FEED);
 
+      const [vault] = deriveVaultAddress(collateralMint);
+      const [userVaultAddress] = deriveUserVaultAddress(
+        vault,
+        wallet.publicKey,
+      );
+      const userVaultInfo = await connection.getAccountInfo(userVaultAddress);
+      const userAta = getAssociatedTokenAddressSync(
+        collateralMint,
+        wallet.publicKey,
+      );
+      const userAtaInfo = await connection.getAccountInfo(userAta);
+
+      const transaction = new Transaction();
+
+      // Ensure user ATA exists if performing a deposit
+      if (!userAtaInfo && activeTab === "deposit") {
+        setTxStatus("Creating Associated Token Account for collateral…");
+        const createAtaIx = createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          userAta,
+          wallet.publicKey,
+          collateralMint,
+        );
+        transaction.add(createAtaIx);
+      }
+
+      // Ensure UserVaultAccount exists
+      if (!userVaultInfo) {
+        setTxStatus(
+          "Account not initialized. Adding initialization instruction…",
+        );
+        const initUserVaultIx = buildInitializeUserVaultAccountInstruction({
+          owner: wallet.publicKey,
+          collateralMint,
+        });
+        transaction.add(initUserVaultIx);
+      }
+
       let ix;
-      if (activeTab === "increase") {
+      if (activeTab === "deposit") {
+        const parsedDeposit = parseFloat(depositAmount) || 100;
+        const depositAtoms = BigInt(Math.round(parsedDeposit * 1_000_000));
+        ix = buildDepositInstruction({
+          owner: wallet.publicKey,
+          collateralMint,
+          amount: depositAtoms,
+        });
+      } else if (activeTab === "increase") {
+        setTxStatus("Fetching current oracle price from Pyth…");
+        const oracleInfo = await connection.getAccountInfo(oracleUpdateAccount);
+        if (!oracleInfo) {
+          throw new Error("Unable to read Pyth oracle account from cluster.");
+        }
+        const { normalizedPrice } = parsePythPriceUpdateV2(oracleInfo.data);
+
         const sizeDelta = BigInt(Math.round(parsedSize * 1_000_000));
-        const notionalDelta = BigInt(Math.round(notionalUsd * 1_000_000));
+        const notionalDelta = notionalForSize(sizeDelta, normalizedPrice);
         const collateralDelta = BigInt(
           Math.round(parsedCollateral * 1_000_000),
         );
@@ -88,8 +148,15 @@ export function UserTransactionPanel({
           collateralDelta,
         });
       } else if (activeTab === "reduce") {
+        setTxStatus("Fetching current oracle price from Pyth…");
+        const oracleInfo = await connection.getAccountInfo(oracleUpdateAccount);
+        if (!oracleInfo) {
+          throw new Error("Unable to read Pyth oracle account from cluster.");
+        }
+        const { normalizedPrice } = parsePythPriceUpdateV2(oracleInfo.data);
+
         const sizeDelta = BigInt(Math.round(parsedSize * 1_000_000));
-        const notionalDelta = BigInt(Math.round(notionalUsd * 1_000_000));
+        const notionalDelta = notionalForSize(sizeDelta, normalizedPrice);
 
         ix = buildReducePositionInstruction({
           owner: wallet.publicKey,
@@ -108,24 +175,6 @@ export function UserTransactionPanel({
         });
       }
 
-      const [vault] = deriveVaultAddress(collateralMint);
-      const [userVaultAddress] = deriveUserVaultAddress(
-        vault,
-        wallet.publicKey,
-      );
-      const userVaultInfo = await connection.getAccountInfo(userVaultAddress);
-
-      const transaction = new Transaction();
-      if (!userVaultInfo) {
-        setTxStatus(
-          "Account not initialized. Adding initialization instruction…",
-        );
-        const initUserVaultIx = buildInitializeUserVaultAccountInstruction({
-          owner: wallet.publicKey,
-          collateralMint,
-        });
-        transaction.add(initUserVaultIx);
-      }
       transaction.add(ix);
 
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
@@ -171,6 +220,15 @@ export function UserTransactionPanel({
         <button
           type="button"
           role="tab"
+          aria-selected={activeTab === "deposit"}
+          className={`tx-tab ${activeTab === "deposit" ? "selected" : ""}`}
+          onClick={() => setActiveTab("deposit")}
+        >
+          Deposit
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeTab === "increase"}
           className={`tx-tab ${activeTab === "increase" ? "selected" : ""}`}
           onClick={() => setActiveTab("increase")}
@@ -196,6 +254,30 @@ export function UserTransactionPanel({
           Close
         </button>
       </div>
+
+      {activeTab === "deposit" && (
+        <div className="tx-form">
+          <div className="input-row">
+            <div>
+              <label htmlFor={`${formId}-deposit`}>
+                Deposit Collateral (USDC)
+              </label>
+              <input
+                id={`${formId}-deposit`}
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                step="10"
+                min="1"
+              />
+            </div>
+          </div>
+          <p className="tx-note">
+            Deposit test collateral (USDC) into the SentinelX vault to mint
+            vault shares and fund initial margin for perpetual positions.
+          </p>
+        </div>
+      )}
 
       {activeTab === "increase" && (
         <div className="tx-form">

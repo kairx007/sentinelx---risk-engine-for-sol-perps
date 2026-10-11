@@ -7,11 +7,16 @@ import {
   buildReducePositionInstruction,
   buildClosePositionInstruction,
   buildInitializeUserVaultAccountInstruction,
+  buildDepositInstruction,
+  decodeUserVaultAccount,
+  parsePythPriceUpdateV2,
+  notionalForSize,
   PositionSide,
   INCREASE_POSITION_DISCRIMINATOR,
   REDUCE_POSITION_DISCRIMINATOR,
   CLOSE_POSITION_DISCRIMINATOR,
   INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR,
+  DEPOSIT_DISCRIMINATOR,
 } from "../src/solana/transactions";
 import { RISK_VAULT_PROGRAM_ID } from "../../risk-publisher/src/risk-state";
 
@@ -131,5 +136,51 @@ describe("Phase 4 Transaction Builders", () => {
     expect(initIx.data.subarray(0, 8)).toEqual(
       INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR,
     );
+  });
+
+  it("accurately parses Pyth PriceUpdateV2 and computes integer notionalDelta", () => {
+    // Construct dummy Pyth PriceUpdateV2 buffer
+    // Layout: 8 bytes discriminator + 32 bytes auth + 1 byte verif + 32 bytes feed_id
+    // + 8 bytes price + 8 bytes conf + 4 bytes expo + 8 bytes pub_time
+    const buffer = Buffer.alloc(134);
+    buffer.writeBigInt64LE(10946856370n, 73); // $109.46856370 with expo -8
+    buffer.writeBigUInt64LE(2986445n, 81);
+    buffer.writeInt32LE(-8, 89);
+    buffer.writeBigInt64LE(1700000000n, 93);
+
+    const { normalizedPrice, publishTime } = parsePythPriceUpdateV2(buffer);
+    expect(normalizedPrice).toBe(109468563n); // scaled to 6 decimals (scale_delta = -8 + 6 = -2 -> /100)
+    expect(publishTime).toBe(1700000000n);
+
+    // Compute notional for 1.0 SOL (1_000_000n atoms)
+    const notional = notionalForSize(1_000_000n, normalizedPrice);
+    expect(notional).toBe(109468563n);
+  });
+
+  it("builds a deposit instruction and decodes UserVaultAccount binary layout", () => {
+    const depositIx = buildDepositInstruction({
+      owner: dummyOwner,
+      collateralMint: dummyMint,
+      amount: 100_000_000n,
+    });
+
+    expect(depositIx.keys.length).toBe(7);
+    expect(depositIx.data.subarray(0, 8)).toEqual(DEPOSIT_DISCRIMINATOR);
+    expect(depositIx.data.readBigUInt64LE(8)).toBe(100_000_000n);
+
+    // Test decodeUserVaultAccount
+    const userVaultBuffer = Buffer.alloc(97);
+    dummyOwner.toBuffer().copy(userVaultBuffer, 8);
+    dummyMint.toBuffer().copy(userVaultBuffer, 40);
+    userVaultBuffer.writeBigUInt64LE(50_000_000n, 72); // shares
+    userVaultBuffer.writeBigUInt64LE(20_000_000n, 80); // locked_collateral
+    userVaultBuffer.writeBigUInt64LE(0n, 88); // settlement_reserved
+    userVaultBuffer.writeUInt8(254, 96); // bump
+
+    const decoded = decodeUserVaultAccount(userVaultBuffer);
+    expect(decoded.owner.toBase58()).toBe(dummyOwner.toBase58());
+    expect(decoded.shares).toBe(50_000_000n);
+    expect(decoded.lockedCollateral).toBe(20_000_000n);
+    expect(decoded.bump).toBe(254);
   });
 });

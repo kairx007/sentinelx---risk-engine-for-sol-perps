@@ -116,6 +116,15 @@ describe("Phase 5 Live Demo Components", () => {
       screen.getByRole("button", { name: "Connect Wallet to Transact" }),
     ).toBeDefined();
 
+    // Switch to Deposit tab
+    fireEvent.click(screen.getByRole("tab", { name: "Deposit" }));
+    expect(screen.getByText("Deposit Collateral (USDC)")).toBeDefined();
+    expect(
+      screen.getByText(
+        /Deposit test collateral \(USDC\) into the SentinelX vault/,
+      ),
+    ).toBeDefined();
+
     // Switch to Reduce tab
     fireEvent.click(screen.getByRole("tab", { name: "Reduce" }));
     expect(screen.getByText("Size to Reduce (SOL)")).toBeDefined();
