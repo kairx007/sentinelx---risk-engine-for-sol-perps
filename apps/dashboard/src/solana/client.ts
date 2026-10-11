@@ -51,7 +51,7 @@ export interface ChainReader {
 
 const DEFAULT_RPC_URL = "https://api.devnet.solana.com";
 const DEFAULT_CLUSTER = "devnet";
-const DEFAULT_COLLATERAL_MINT = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+const DEFAULT_COLLATERAL_MINT = "49rjDqfTwbMZhiayCRaRWhtUyoduSWSzQTD2FdV12xxx";
 
 const CLUSTER_GENESIS_HASHES: Record<string, string> = {
   devnet: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",

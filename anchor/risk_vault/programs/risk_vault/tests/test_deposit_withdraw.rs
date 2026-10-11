@@ -177,7 +177,9 @@ fn send_result(
             Err(_) => return Err(TransactionError::SignatureFailure),
         };
     svm.send_transaction(transaction)
-        .map(|_| ())
+        .map(|_| {
+            svm.expire_blockhash();
+        })
         .map_err(|err| err.err)
 }
 
@@ -1885,3 +1887,189 @@ fn unauthorized_user_cannot_modify_another_users_position() {
         before
     );
 }
+
+#[test]
+fn regression_sec02_and_sec01_open_close_loss_reopen_and_withdraw() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    let initial_user = user_state(&fixture, &user);
+    assert_eq!(initial_user.shares, 500);
+    assert_eq!(initial_user.locked_collateral, 0);
+    assert_eq!(initial_user.settlement_reserved, 0);
+
+    // 1. Open Long position: 100 size, 300 notional, 100 collateral locked (3x leverage)
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        300,
+        100,
+    ));
+    let pos1 = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos1.status, risk_vault::state::PositionStatus::Open);
+    assert_eq!(pos1.size, 100);
+    assert_eq!(pos1.collateral_locked, 100);
+
+    // 2. Pyth price drops: entry was $3, drops to $1 -> loss of 200 quote atoms
+    let feed_id = fixture.feed_id;
+    set_pyth_price(&mut fixture, 100_000_000, 0, -8, 1_000_000, feed_id);
+
+    // 3. Close position with a loss
+    assert!(send_close(&mut fixture, &user, market));
+    let pos_closed = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos_closed.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(pos_closed.size, 0);
+    assert_eq!(pos_closed.collateral_locked, 0);
+    assert_eq!(pos_closed.bad_debt, 100);
+
+    let user_after_close = user_state(&fixture, &user);
+    assert_eq!(user_after_close.locked_collateral, 0);
+    assert_eq!(user_after_close.settlement_reserved, 100);
+    assert_eq!(user_after_close.shares, 500);
+
+    // 4. SEC-02 Fix Verification: Reopen a position on the SAME market
+    // Price resets to healthy $3
+    set_pyth_price(&mut fixture, 300_000_000, 0, -8, 1_000_000, feed_id);
+    // User free collateral is: 500 - 0 locked - 100 settlement_reserved = 400.
+    // Reopen as Short with 50 collateral, 100 notional (2x leverage, allowed under Low risk cap of 3x)
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Short,
+        100,
+        100,
+        50,
+    ));
+    let pos_reopened = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos_reopened.status, risk_vault::state::PositionStatus::Open);
+    assert_eq!(pos_reopened.side, risk_vault::state::PositionSide::Short);
+    assert_eq!(pos_reopened.size, 100);
+    assert_eq!(pos_reopened.collateral_locked, 50);
+
+    // 5. Excessive leverage on reopened position is rejected by policy cap
+    // Current cap is Low (3x). Trying to add 200 notional with 0 collateral would exceed 3x:
+    // notional 300 / collateral 50 = 6x (> 3x), must fail
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Short,
+        200,
+        200,
+        0,
+    ));
+
+    // 6. Close the reopened position without loss
+    let close_ix = close_instruction(&fixture, &user, market);
+    let close_res = send_result(&mut fixture.svm, &user.keypair, close_ix);
+    if let Err(e) = &close_res {
+        panic!("send_close failed with error: {:?}", e);
+    }
+    let pos_final = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos_final.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(pos_final.size, 0);
+    assert_eq!(pos_final.collateral_locked, 0);
+
+    // 7. Withdraw remaining free collateral
+    // Total deposits = 500, User shares = 500, settlement_reserved = 100, locked = 0
+    // Max withdrawable = 500 - 100 = 400.
+    // Attempting to withdraw 401 must fail:
+    assert!(!send_withdraw(
+        &mut fixture,
+        &user.keypair,
+        user.keypair.pubkey(),
+        user.user_vault_account,
+        user.token_account,
+        401,
+    ));
+    // Withdrawing exactly 400 free collateral succeeds:
+    assert!(send_withdraw(
+        &mut fixture,
+        &user.keypair,
+        user.keypair.pubkey(),
+        user.user_vault_account,
+        user.token_account,
+        400,
+    ));
+
+    let user_final = user_state(&fixture, &user);
+    assert_eq!(user_final.shares, 100);
+    assert_eq!(user_final.settlement_reserved, 100);
+    assert_eq!(user_final.locked_collateral, 0);
+    assert_eq!(vault_state(&fixture).total_deposits, 100);
+    assert_eq!(vault_state(&fixture).total_shares, 100);
+    assert_eq!(token_balance(&fixture.svm, &fixture.vault_token_account), 100);
+}
+
+#[test]
+fn reductions_and_closures_remain_possible_under_high_and_critical_risk() {
+    let (mut fixture, user, market) = funded_position_fixture();
+    // Open a position under Low risk: 100 size, 100 notional, 100 locked
+    assert!(send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        100,
+        100,
+    ));
+
+    // Escalate risk to HIGH (1x cap)
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::High,
+        75,
+        risk_vault::state::ContagionState::Developing,
+        100,
+        2,
+    );
+
+    // Increasing beyond 1x is blocked under HIGH risk
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        100,
+        200,
+        0,
+    ));
+
+    // But reducing position is PERMITTED under HIGH risk
+    assert!(send_reduction(&mut fixture, &user, market, 50, 50));
+    let pos = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos.size, 50);
+    assert_eq!(pos.collateral_locked, 50);
+
+    // Escalate risk to CRITICAL (0x cap, Active contagion)
+    update_risk(
+        &mut fixture,
+        risk_vault::state::RiskLevel::Critical,
+        95,
+        risk_vault::state::ContagionState::Active,
+        0,
+        3,
+    );
+
+    // Increasing is completely blocked under CRITICAL
+    assert!(!send_position(
+        &mut fixture,
+        &user,
+        market,
+        risk_vault::state::PositionSide::Long,
+        10,
+        10,
+        10,
+    ));
+
+    // But closing the position is PERMITTED under CRITICAL risk
+    assert!(send_close(&mut fixture, &user, market));
+    let pos_closed = position_state(&fixture, &user.keypair.pubkey(), &market);
+    assert_eq!(pos_closed.status, risk_vault::state::PositionStatus::Closed);
+    assert_eq!(pos_closed.size, 0);
+    assert_eq!(pos_closed.collateral_locked, 0);
+}
+

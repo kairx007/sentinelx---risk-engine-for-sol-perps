@@ -7,7 +7,7 @@ export function useOnChainRiskState(): ChainSnapshot {
   const [snapshot, setSnapshot] = useState<ChainSnapshot>(() => ({
     status: "unconfigured",
     cluster: null,
-    programId: "33fMx1DC1XXdSYXG8VUFqH5y1gDqxmEpbTTwESx21Rtq",
+    programId: "H1DeHTackptYWeK8EAjLGG6UXG7xFQhkMUgWsdNrm45H",
     vaultAddress: null,
     riskStateAddress: null,
     riskState: null,

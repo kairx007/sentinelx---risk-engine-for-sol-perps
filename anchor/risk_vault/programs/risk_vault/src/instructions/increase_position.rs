@@ -114,7 +114,8 @@ pub fn handle_increase_position(
         VaultError::InsufficientFreeCollateral
     );
 
-    let position_is_new = ctx.accounts.position.owner == Pubkey::default();
+    let position_is_new = ctx.accounts.position.owner == Pubkey::default()
+        || ctx.accounts.position.status == PositionStatus::Closed;
     if !position_is_new {
         require!(
             ctx.accounts.position.owner == ctx.accounts.owner.key()

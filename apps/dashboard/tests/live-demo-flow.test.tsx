@@ -9,7 +9,7 @@ describe("Phase 5 Live Demo Components", () => {
   const dummyChainSnapshot: ChainSnapshot = {
     status: "available",
     cluster: "devnet",
-    programId: "33fMx1DC1XXdSYXG8VUFqH5y1gDqxmEpbTTwESx21Rtq",
+    programId: "H1DeHTackptYWeK8EAjLGG6UXG7xFQhkMUgWsdNrm45H",
     vaultAddress: "7UVimffxr9ow1ukKttssAKBiNdTe2deMm98qwx5Y8NNd",
     riskStateAddress: "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4SE5nv",
     riskState: {

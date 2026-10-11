@@ -9,9 +9,9 @@ import {
   PositionSide,
 } from "../solana/transactions";
 
-// Default Pyth & market placeholders for SOL-PERP devnet demonstration
+// Live Pyth PriceUpdateV2 account for SOL/USD on Solana Devnet
 const DEFAULT_SOL_PERP_MARKET = "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4SE5nv";
-const DEFAULT_PYTH_FEED = "7UVimffxr9ow1ukKttssAKBiNdTe2deMm98qwx5Y8NNd";
+const DEFAULT_PYTH_FEED = "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE";
 
 export function UserTransactionPanel({
   chainSnapshot,

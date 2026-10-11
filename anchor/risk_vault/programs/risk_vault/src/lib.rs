@@ -14,7 +14,7 @@ pub use instructions::*;
 pub use policy::*;
 pub use state::*;
 
-declare_id!("33fMx1DC1XXdSYXG8VUFqH5y1gDqxmEpbTTwESx21Rtq");
+declare_id!("H1DeHTackptYWeK8EAjLGG6UXG7xFQhkMUgWsdNrm45H");
 
 #[program]
 pub mod risk_vault {
