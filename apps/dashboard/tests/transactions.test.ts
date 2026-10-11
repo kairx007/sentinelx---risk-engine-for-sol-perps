@@ -6,10 +6,12 @@ import {
   buildIncreasePositionInstruction,
   buildReducePositionInstruction,
   buildClosePositionInstruction,
+  buildInitializeUserVaultAccountInstruction,
   PositionSide,
   INCREASE_POSITION_DISCRIMINATOR,
   REDUCE_POSITION_DISCRIMINATOR,
   CLOSE_POSITION_DISCRIMINATOR,
+  INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR,
 } from "../src/solana/transactions";
 import { RISK_VAULT_PROGRAM_ID } from "../../risk-publisher/src/risk-state";
 
@@ -79,5 +81,55 @@ describe("Phase 4 Transaction Builders", () => {
 
     expect(ix.programId.toBase58()).toBe(RISK_VAULT_PROGRAM_ID.toBase58());
     expect(ix.data).toEqual(CLOSE_POSITION_DISCRIMINATOR);
+  });
+
+  it("verifies that building instructions for Increase, Reduce, and Close works without accessing Node process", () => {
+    // Increase
+    const incIx = buildIncreasePositionInstruction({
+      owner: dummyOwner,
+      collateralMint: dummyMint,
+      market: dummyMarket,
+      oracleUpdateAccount: dummyOracle,
+      side: PositionSide.Long,
+      sizeDelta: 1_000_000n,
+      notionalDelta: 150_000_000n,
+      collateralDelta: 50_000_000n,
+    });
+    expect(incIx.keys.length).toBe(10);
+
+    // Reduce
+    const redIx = buildReducePositionInstruction({
+      owner: dummyOwner,
+      collateralMint: dummyMint,
+      market: dummyMarket,
+      oracleUpdateAccount: dummyOracle,
+      sizeDelta: 500_000n,
+      notionalDelta: 75_000_000n,
+    });
+    expect(redIx.keys.length).toBe(8);
+
+    // Close
+    const closeIx = buildClosePositionInstruction({
+      owner: dummyOwner,
+      collateralMint: dummyMint,
+      market: dummyMarket,
+      oracleUpdateAccount: dummyOracle,
+    });
+    expect(closeIx.keys.length).toBe(8);
+
+    // Initialize User Vault Account
+    const initIx = buildInitializeUserVaultAccountInstruction({
+      owner: dummyOwner,
+      collateralMint: dummyMint,
+    });
+    expect(initIx.keys.length).toBe(4);
+    expect(initIx.keys[0]?.pubkey.toBase58()).toBe(dummyOwner.toBase58());
+    expect(initIx.keys[0]?.isSigner).toBe(true);
+    expect(initIx.keys[3]?.pubkey.toBase58()).toBe(
+      SystemProgram.programId.toBase58(),
+    );
+    expect(initIx.data.subarray(0, 8)).toEqual(
+      INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR,
+    );
   });
 });

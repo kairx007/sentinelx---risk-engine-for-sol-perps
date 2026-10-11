@@ -6,8 +6,11 @@ import {
   buildIncreasePositionInstruction,
   buildReducePositionInstruction,
   buildClosePositionInstruction,
+  buildInitializeUserVaultAccountInstruction,
+  deriveUserVaultAddress,
   PositionSide,
 } from "../solana/transactions";
+import { deriveVaultAddress } from "../../../risk-publisher/src/risk-state";
 
 // Live Pyth PriceUpdateV2 account for SOL/USD on Solana Devnet
 const DEFAULT_SOL_PERP_MARKET = "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4SE5nv";
@@ -55,10 +58,9 @@ export function UserTransactionPanel({
     setTxError(null);
 
     try {
-      const connection = new Connection(
-        process.env.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com",
-        "confirmed",
-      );
+      const rpcUrl =
+        import.meta.env.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com";
+      const connection = new Connection(rpcUrl, "confirmed");
 
       const collateralMint = new PublicKey(
         chainSnapshot.vault?.collateralMint ||
@@ -106,11 +108,29 @@ export function UserTransactionPanel({
         });
       }
 
+      const [vault] = deriveVaultAddress(collateralMint);
+      const [userVaultAddress] = deriveUserVaultAddress(
+        vault,
+        wallet.publicKey,
+      );
+      const userVaultInfo = await connection.getAccountInfo(userVaultAddress);
+
+      const transaction = new Transaction();
+      if (!userVaultInfo) {
+        setTxStatus(
+          "Account not initialized. Adding initialization instruction…",
+        );
+        const initUserVaultIx = buildInitializeUserVaultAccountInstruction({
+          owner: wallet.publicKey,
+          collateralMint,
+        });
+        transaction.add(initUserVaultIx);
+      }
+      transaction.add(ix);
+
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
-      const transaction = new Transaction({
-        recentBlockhash: blockhash,
-        feePayer: wallet.publicKey,
-      }).add(ix);
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallet.publicKey;
 
       // Pre-flight simulation
       const simulation = await connection.simulateTransaction(transaction);

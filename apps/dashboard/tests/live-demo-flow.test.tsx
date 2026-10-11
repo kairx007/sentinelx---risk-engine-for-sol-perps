@@ -100,4 +100,35 @@ describe("Phase 5 Live Demo Components", () => {
     expect(screen.getByText("Policy Evaluated")).toBeDefined();
     expect(screen.getByText("RiskState Verified")).toBeDefined();
   });
+
+  it("handles UserTransactionPanel Increase, Reduce, and Close tab interactions without process errors", async () => {
+    const { UserTransactionPanel } =
+      await import("../src/components/UserTransactionPanel");
+    const { fireEvent } = await import("@testing-library/react");
+    render(<UserTransactionPanel chainSnapshot={dummyChainSnapshot} />);
+
+    // Default tab is Increase
+    expect(screen.getByRole("tab", { name: "Increase" })).toBeDefined();
+    expect(
+      screen.getByText("Position Execution & On-Chain Gate"),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Connect Wallet to Transact" }),
+    ).toBeDefined();
+
+    // Switch to Reduce tab
+    fireEvent.click(screen.getByRole("tab", { name: "Reduce" }));
+    expect(screen.getByText("Size to Reduce (SOL)")).toBeDefined();
+    expect(
+      screen.getByText(/Risk-reducing action: Lowering position size/),
+    ).toBeDefined();
+
+    // Switch to Close tab
+    fireEvent.click(screen.getByRole("tab", { name: "Close" }));
+    expect(screen.getByText(/Full exit: Closes open position/)).toBeDefined();
+
+    // Switch back to Increase
+    fireEvent.click(screen.getByRole("tab", { name: "Increase" }));
+    expect(screen.getByText("Position Size (SOL)")).toBeDefined();
+  });
 });

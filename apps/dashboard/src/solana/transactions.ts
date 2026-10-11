@@ -32,6 +32,11 @@ export const CLOSE_POSITION_DISCRIMINATOR = Buffer.from([
   123, 134, 81, 0, 49, 68, 98, 98,
 ]);
 
+// initialize_user_vault_account: [10, 106, 178, 52, 164, 91, 108, 69]
+export const INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR = Buffer.from([
+  10, 106, 178, 52, 164, 91, 108, 69,
+]);
+
 export enum PositionSide {
   Long = 0,
   Short = 1,
@@ -238,6 +243,40 @@ export function buildClosePositionInstruction(
     { pubkey: params.oracleUpdateAccount, isSigner: false, isWritable: false },
     { pubkey: position, isSigner: false, isWritable: true },
     { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false },
+  ];
+
+  return new TransactionInstruction({
+    keys,
+    programId,
+    data,
+  });
+}
+
+export interface BuildInitializeUserVaultAccountParams {
+  owner: PublicKey;
+  collateralMint: PublicKey;
+  programId?: PublicKey;
+}
+
+export function buildInitializeUserVaultAccountInstruction(
+  params: BuildInitializeUserVaultAccountParams,
+): TransactionInstruction {
+  const programId = params.programId ?? RISK_VAULT_PROGRAM_ID;
+  const [vault] = deriveVaultAddress(params.collateralMint);
+  const [userVaultAccount] = deriveUserVaultAddress(
+    vault,
+    params.owner,
+    programId,
+  );
+
+  const data = Buffer.alloc(8);
+  INITIALIZE_USER_VAULT_ACCOUNT_DISCRIMINATOR.copy(data, 0);
+
+  const keys = [
+    { pubkey: params.owner, isSigner: true, isWritable: true },
+    { pubkey: vault, isSigner: false, isWritable: false },
+    { pubkey: userVaultAccount, isSigner: false, isWritable: true },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
   ];
 
   return new TransactionInstruction({
