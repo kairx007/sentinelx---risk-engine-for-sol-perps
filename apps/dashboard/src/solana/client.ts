@@ -9,7 +9,7 @@ import {
   type RiskStateSnapshot,
 } from "../../../risk-publisher/src/risk-state";
 
-const MAX_RISK_STATE_AGE_SECONDS = 300;
+const MAX_RISK_STATE_AGE_SECONDS = 800;
 const REQUEST_TIMEOUT_MS = 8_000;
 
 export type ChainStatus =

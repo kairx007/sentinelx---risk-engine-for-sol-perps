@@ -277,7 +277,7 @@ export function UserTransactionPanel({
       if (simulation.value.err) {
         const errorLogs = simulation.value.logs?.join(" ") || "";
         if (errorLogs.includes("RiskStateStale") || errorLogs.includes("6021") || errorLogs.includes("0x1785")) {
-          setTxStatus("On-chain RiskState expired (>300s). Refreshing risk pulse…");
+          setTxStatus("On-chain RiskState expired (>800s). Refreshing risk pulse…");
           try {
             await fetch("/api/risk/publish-pulse", { method: "POST" });
             // Re-simulate with fresh risk state

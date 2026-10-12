@@ -256,12 +256,46 @@ export function OnChainRiskState({
           </p>
         </div>
       ) : snapshot.status === "stale" ? (
-        <div className="chain-banner chain-banner-warning">
-          <div className="chain-banner-badge">STALE</div>
-          <p>
-            On-chain risk parameters have exceeded the maximum staleness
-            freshness threshold.
-          </p>
+        <div className="chain-banner chain-banner-warning" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div className="chain-banner-badge">STALE</div>
+            <p style={{ margin: 0 }}>
+              On-chain risk parameters have exceeded the maximum staleness
+              freshness threshold (800s).
+            </p>
+          </div>
+          <button
+            type="button"
+            className="pulse-publish-btn"
+            onClick={async (e) => {
+              const btn = e.currentTarget;
+              btn.disabled = true;
+              btn.textContent = "Publishing…";
+              try {
+                await fetch("/api/risk/publish-pulse", { method: "POST" });
+                btn.textContent = "✓ Pulse Published";
+              } catch {
+                btn.textContent = "Failed";
+              } finally {
+                setTimeout(() => {
+                  btn.disabled = false;
+                  btn.textContent = "⚡ Publish Risk Pulse";
+                }, 3000);
+              }
+            }}
+            style={{
+              padding: "5px 12px",
+              fontSize: "12px",
+              background: "#eab308",
+              color: "#0f172a",
+              fontWeight: 600,
+              borderRadius: "6px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            ⚡ Publish Risk Pulse
+          </button>
         </div>
       ) : snapshot.error ? (
         <div className="chain-banner chain-banner-neutral">
