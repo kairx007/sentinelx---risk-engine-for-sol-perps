@@ -1,58 +1,105 @@
-# Solana Perpetuals Risk Engine
+# SentinelX — Autonomous Risk Engine for Solana Perpetuals
 
-An open-source risk intelligence system for Solana perpetual markets. The project will collect venue data, normalize it, calculate deterministic and explainable risk metrics, and expose those results through an API and dashboard.
+SentinelX is an autonomous risk management and intelligence layer for Solana perpetual markets. It continuously monitors cross-venue perp venues (Phoenix & Velocity), calculates real-time risk and divergence metrics, and dynamically enforces leverage caps and collateral requirements on-chain.
 
-## Project status
+---
 
-The API exposes read-only Velocity and Phoenix market/risk views. The separate
-`@perps-risk/risk-publisher` command can publish a deterministic ecosystem
-policy using the vault's configured risk-authority key; it is an explicit
-one-shot command and never accepts arbitrary policy updates over the API. See
-[Velocity Adapter](./docs/velocity-adapter.md) and
-[Phase 7 integration](./docs/phase-7-integration.md). The phased roadmap is in
-[plan.md](./plan.md).
+## ⚡ Quick Start
 
-## Requirements
+### 1. Prerequisites
+- **[Bun](https://bun.sh/)** (v1.1+) or Node.js (v20+)
+- **Solana CLI** (optional, for Anchor / local contract interactions)
 
-- [Bun](https://bun.sh/) 1.3 or newer
+### 2. Start the Server & Dashboard
+Run the automated start script:
 
-## Setup
-
-```sh
-bun install
-bun run typecheck
-bun run test
-bun run build
+```bash
+npm run start
+# or
+bun run start
+# or
+./start.sh
 ```
 
-Tests can also be run by layer:
+This automatically installs dependencies, builds shared packages, and spins up:
+- 🟢 **Risk API Server**: `http://localhost:3000`
+- 🖥️ **Risk Dashboard**: `http://localhost:5173`
 
-```sh
-bun run test:unit        # shared package tests
-bun run test:integration # application and repository level tests
-bun run test:anchor      # Rust Anchor program tests (LiteSVM)
-bun run test:all         # all three layers
+Alternatively, start services individually in dev mode:
+```bash
+# Start backend API (Port 3000)
+npm run api:dev
+
+# Start frontend dashboard (Port 5173)
+npm run dashboard:dev
 ```
 
-Use `bun run lint` and `bun run format:check` to check code style. Copy `.env.example` to `.env` when local environment values are needed.
+---
 
-## Repository layout
+## 🔍 What SentinelX Does
 
-- `apps/` — API, collector, and dashboard applications
-- `packages/` — shared types, metrics, risk, and venue adapters
-- `apps/*/tests/` and `packages/*/tests/` — dedicated tests kept outside production `src/` folders
-- `tests/` — shared fixtures and repository level contract tests
-- `anchor/risk_vault/programs/risk_vault/tests/` — on-chain program tests
-- `docs/` — project documentation
+### 1. Multi-Venue Data Aggregation
+Ingests live market state from Solana perp venues:
+- **Phoenix**: Orderbook depth, mark/index prices, funding, and volume.
+- **Velocity**: SDK-driven perp market accounts, open interest, and spreads.
 
-## Velocity market data
+### 2. Cross-Venue Risk & Divergence Engine
+Computes a composite **Ecosystem Risk Score (0–100)** and identifies systemic imbalances across 5 key divergence dimensions:
+- **Price Divergence**: Spread and coefficient of variation between venue mark prices.
+- **Funding Rate Divergence**: Annualized funding rate deviations across markets.
+- **Open Interest Concentration**: Herfindahl index (HHI) of venue OI distribution.
+- **Liquidity Spread Divergence**: Bid/ask spread expansion across orderbooks.
+- **Liquidation Concentration**: Cascading liquidation imbalances.
 
-The Velocity adapter subscribes to current perp market and oracle accounts with
-the official SDK, then returns a validated canonical `MarketState`. It is
-read-only and does not submit transactions. Velocity is a separate program
-deployment from Drift with different account addresses and USDT-quoted mainnet
-markets; it is not a decoder replacement for Drift V2.
+### 3. On-Chain Risk Policy Enforcement
+- Deployed on **Solana Devnet** (`risk_vault` Anchor program: `H1DeHTackptYWeK8EAjLGG6UXG7xFQhkMUgWsdNrm45H`).
+- Gated by Pyth oracle prices with configured staleness tolerance.
+- Automatically adjusts maximum allowed leverage based on:
+  $$\text{Policy Risk} = \max(\text{Venue Risk}_{\text{Phoenix}}, \text{Venue Risk}_{\text{Velocity}}, \text{Ecosystem Risk})$$
 
-## License
+### 4. Interactive Live Dashboard
+- **Ecosystem Overview**: Live venue comparisons, divergence breakdowns, and methodology explainers.
+- **Position Execution**: Live test USDC faucet, deposit/increase/reduce/close positions, and simulation before on-chain submission.
+- **Contagion Monitor**: Detects isolated vs. active systemic contagion states.
 
-MIT. See [LICENSE](./LICENSE).
+---
+
+## 🧪 Testing
+
+```bash
+# Run all unit tests
+npm run test:unit
+
+# Run frontend dashboard tests
+npm run test:dashboard
+
+# Run Rust Anchor program tests
+npm run test:anchor
+
+# Run full test suite
+npm run test:all
+```
+
+---
+
+## 📁 Repository Structure
+
+```
+├── anchor/              # Solana Anchor smart contracts (risk_vault)
+├── apps/
+│   ├── api/             # Express/Bun backend API service
+│   ├── dashboard/       # React + Vite live risk dashboard
+│   └── risk-publisher/  # On-chain risk state publisher
+├── packages/
+│   ├── adapters/        # Venue adapters (Phoenix, Velocity, Drift, Jupiter)
+│   ├── api-contracts/   # Zod validation schemas and shared types
+│   ├── cross-venue/     # Divergence calculation & contagion models
+│   ├── metrics/         # Financial and statistical risk metrics
+│   └── risk/            # Core scoring formulas and threshold interpolators
+└── start.sh             # One-step startup script
+```
+
+---
+
+## 📄 License
+MIT
