@@ -49,9 +49,11 @@ export async function fetchDashboardSnapshot(
     throw new DashboardApiError("Dashboard API returned invalid JSON.");
   }
   const parsed = DashboardSnapshotSchema.safeParse(body);
-  if (!parsed.success)
+  if (!parsed.success) {
+    console.error("Dashboard API validation error issues:", parsed.error.issues);
     throw new DashboardApiError(
       "Dashboard API response did not match the expected snapshot format.",
     );
+  }
   return parsed.data;
 }

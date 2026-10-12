@@ -1,27 +1,31 @@
 import { z } from "zod";
-import { MarketRiskSchema } from "./market.js";
+import { MarketRiskSchema, VenueStateSchema } from "./market.js";
 import { MarketStateSchema } from "@perps-risk/types";
 
-const venueSnapshot = z
+export { MarketRiskSchema, VenueStateSchema };
+
+const structuredDivergenceMetric = z
   .object({
-    venue: z.enum(["drift", "velocity", "phoenix", "jupiter"]),
-    symbol: z.string(),
-    state: MarketStateSchema,
-    risk: MarketRiskSchema.nullable(),
-    metrics: z
-      .object({
-        price: z.number().finite().nullable(),
-        oi: z.number().finite().nullable(),
-        longOi: z.number().finite().nullable(),
-        shortOi: z.number().finite().nullable(),
-        funding: z.number().finite().nullable(),
-        fundingPeriod: z.number().finite().nullable(),
-        spread: z.number().finite().nullable(),
-        liquidations: z.number().finite().nullable(),
-      })
-      .strict(),
+    value: z.number().finite().nullable(),
+    score: z.number().min(0).max(100).nullable(),
+    weight: z.number().positive(),
+    contribution: z.number().min(0).max(100).nullable(),
+    driver: z.string().optional(),
   })
   .strict();
+
+const divergenceMetric = z.preprocess((val) => {
+  if (typeof val === "number") {
+    return {
+      value: val,
+      score: null,
+      weight: 1.0,
+      contribution: null,
+    };
+  }
+  return val;
+}, structuredDivergenceMetric);
+
 
 export const EcosystemRiskSchema = z
   .object({
@@ -30,14 +34,35 @@ export const EcosystemRiskSchema = z
     venueCount: z.number().int().nonnegative(),
     ecosystemScore: z.number().int().min(0).max(100).nullable(),
     ecosystemLevel: z.enum(["low", "medium", "high", "critical"]).nullable(),
-    venueSnapshots: z.array(venueSnapshot),
+    venueSnapshots: z.array(
+      z
+        .object({
+          venue: z.enum(["drift", "velocity", "phoenix", "jupiter"]),
+          symbol: z.string(),
+          state: MarketStateSchema,
+          risk: MarketRiskSchema.nullable(),
+          metrics: z
+            .object({
+              price: z.number().finite().nullable(),
+              oi: z.number().finite().nullable(),
+              longOi: z.number().finite().nullable(),
+              shortOi: z.number().finite().nullable(),
+              funding: z.number().finite().nullable(),
+              fundingPeriod: z.number().finite().nullable(),
+              spread: z.number().finite().nullable(),
+              liquidations: z.number().finite().nullable(),
+            })
+            .strict(),
+        })
+        .strict(),
+    ),
     divergence: z
       .object({
-        price: z.number().finite().nullable(),
-        funding: z.number().finite().nullable(),
-        oiConcentration: z.number().finite().nullable(),
-        liquiditySpread: z.number().finite().nullable(),
-        liquidationConcentration: z.number().finite().nullable(),
+        price: divergenceMetric.nullable(),
+        funding: divergenceMetric.nullable(),
+        oiConcentration: divergenceMetric.nullable(),
+        liquiditySpread: divergenceMetric.nullable(),
+        liquidationConcentration: divergenceMetric.nullable(),
       })
       .strict(),
     riskDrivers: z.array(z.string()),

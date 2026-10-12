@@ -143,18 +143,96 @@ describe("Phase 4 Transaction Builders", () => {
     // Layout: 8 bytes discriminator + 32 bytes auth + 1 byte verif + 32 bytes feed_id
     // + 8 bytes price + 8 bytes conf + 4 bytes expo + 8 bytes pub_time
     const buffer = Buffer.alloc(134);
+    buffer.writeUInt8(1, 40); // VerificationLevel::Full
     buffer.writeBigInt64LE(10946856370n, 73); // $109.46856370 with expo -8
     buffer.writeBigUInt64LE(2986445n, 81);
     buffer.writeInt32LE(-8, 89);
     buffer.writeBigInt64LE(1700000000n, 93);
 
-    const { normalizedPrice, publishTime } = parsePythPriceUpdateV2(buffer);
+    const { normalizedPrice, publishTime } = parsePythPriceUpdateV2(buffer, 0);
     expect(normalizedPrice).toBe(109468563n); // scaled to 6 decimals (scale_delta = -8 + 6 = -2 -> /100)
     expect(publishTime).toBe(1700000000n);
 
     // Compute notional for 1.0 SOL (1_000_000n atoms)
     const notional = notionalForSize(1_000_000n, normalizedPrice);
     expect(notional).toBe(109468563n);
+  });
+
+  describe("Regression tests: InvalidPrice and Oracle validations", () => {
+    it("rejects non-positive oracle price, zero size, and zero notional", () => {
+      const buffer = Buffer.alloc(134);
+      buffer.writeUInt8(1, 40);
+      buffer.writeBigInt64LE(0n, 73); // Zero price
+      buffer.writeBigUInt64LE(0n, 81);
+      buffer.writeInt32LE(-8, 89);
+      buffer.writeBigInt64LE(1700000000n, 93);
+
+      expect(() => parsePythPriceUpdateV2(buffer, 0)).toThrow(/non-positive/);
+      expect(() => notionalForSize(0n, 100_000_000n)).toThrow(/size must be greater than zero/);
+      expect(() => notionalForSize(1_000_000n, 0n)).toThrow(/Price must be greater than zero/);
+    });
+
+    it("rejects confidence exceeding price and unverified oracle feed", () => {
+      const unverifiedBuffer = Buffer.alloc(134);
+      unverifiedBuffer.writeUInt8(0, 40); // Partial / unverified
+      unverifiedBuffer.writeBigInt64LE(100_000_000n, 73);
+      unverifiedBuffer.writeInt32LE(-8, 89);
+      expect(() => parsePythPriceUpdateV2(unverifiedBuffer, 0)).toThrow(/not fully verified/);
+
+      const highConfBuffer = Buffer.alloc(134);
+      highConfBuffer.writeUInt8(1, 40);
+      highConfBuffer.writeBigInt64LE(100_000_000n, 73);
+      highConfBuffer.writeBigUInt64LE(100_000_001n, 81); // conf > price
+      highConfBuffer.writeInt32LE(-8, 89);
+      expect(() => parsePythPriceUpdateV2(highConfBuffer, 0)).toThrow(/confidence .* exceeds or equals price/);
+    });
+
+    it("rejects stale and future oracle updates", () => {
+      const buffer = Buffer.alloc(134);
+      buffer.writeUInt8(1, 40);
+      buffer.writeBigInt64LE(100_000_000n, 73);
+      buffer.writeBigUInt64LE(1_000n, 81);
+      buffer.writeInt32LE(-8, 89);
+      buffer.writeBigInt64LE(1000n, 93); // Published at t=1000
+
+      // Future time check (now = 900 < publishTime = 1000)
+      expect(() => parsePythPriceUpdateV2(buffer, 30, 900)).toThrow(/timestamp is in the future/);
+
+      // Stale check (now = 1050 > 1000 + 30)
+      expect(() => parsePythPriceUpdateV2(buffer, 30, 1050)).toThrow(/oracle price is stale/);
+    });
+
+    it("rejects unsupported exponents and truncation to zero", () => {
+      const badExpoBuffer = Buffer.alloc(134);
+      badExpoBuffer.writeUInt8(1, 40);
+      badExpoBuffer.writeBigInt64LE(100_000_000n, 73);
+      badExpoBuffer.writeInt32LE(-15, 89); // exponent < -12
+      expect(() => parsePythPriceUpdateV2(badExpoBuffer, 0)).toThrow(/Unsupported Pyth price exponent/);
+
+      const truncateBuffer = Buffer.alloc(134);
+      truncateBuffer.writeUInt8(1, 40);
+      truncateBuffer.writeBigInt64LE(10n, 73); // tiny price with -8 expo -> 10 / 100 = 0
+      truncateBuffer.writeInt32LE(-8, 89);
+      expect(() => parsePythPriceUpdateV2(truncateBuffer, 0)).toThrow(/truncated to zero/);
+    });
+
+    it("verifies accurate scaling across different positive and negative exponents", () => {
+      // Exponent -6: exact quote atom unit ($150.000000 = 150_000_000 raw)
+      const bufNeg6 = Buffer.alloc(134);
+      bufNeg6.writeUInt8(1, 40);
+      bufNeg6.writeBigInt64LE(150_000_000n, 73);
+      bufNeg6.writeInt32LE(-6, 89);
+      const parsedNeg6 = parsePythPriceUpdateV2(bufNeg6, 0);
+      expect(parsedNeg6.normalizedPrice).toBe(150_000_000n);
+
+      // Exponent 0: whole dollar units ($150 = 150 raw -> normalized to 150_000_000)
+      const bufZero = Buffer.alloc(134);
+      bufZero.writeUInt8(1, 40);
+      bufZero.writeBigInt64LE(150n, 73);
+      bufZero.writeInt32LE(0, 89);
+      const parsedZero = parsePythPriceUpdateV2(bufZero, 0);
+      expect(parsedZero.normalizedPrice).toBe(150_000_000n);
+    });
   });
 
   it("builds a deposit instruction and decodes UserVaultAccount binary layout", () => {

@@ -102,15 +102,45 @@ export function createAssociatedTokenAccountInstruction(
   });
 }
 
+export function createSplTokenTransferInstruction(
+  source: PublicKey,
+  destination: PublicKey,
+  owner: PublicKey,
+  amount: bigint,
+): TransactionInstruction {
+  const data = Buffer.alloc(9);
+  data.writeUInt8(3, 0); // Transfer instruction index = 3 in SPL Token Program
+  data.writeBigUInt64LE(amount, 1);
+  return new TransactionInstruction({
+    programId: TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: source, isSigner: false, isWritable: true },
+      { pubkey: destination, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: true, isWritable: false },
+    ],
+    data,
+  });
+}
+
 export enum PositionSide {
   Long = 0,
   Short = 1,
 }
 
-export function parsePythPriceUpdateV2(data: Buffer): {
+export function parsePythPriceUpdateV2(
+  data: Buffer,
+  maxAgeSeconds = 800,
+  referenceTimestamp?: number,
+): {
   normalizedPrice: bigint;
   publishTime: bigint;
 } {
+  if (!data || data.length < 101) {
+    throw new Error(
+      `Invalid Pyth PriceUpdateV2 data length: expected at least 101 bytes, got ${data?.length ?? 0}`,
+    );
+  }
+
   // Pyth PriceUpdateV2 binary memory layout:
   // discriminator: 8 bytes (0..8)
   // write_authority: 32 bytes (8..40)
@@ -121,9 +151,47 @@ export function parsePythPriceUpdateV2(data: Buffer): {
   //   conf: u64 (81..89)
   //   exponent: i32 (89..93)
   //   publish_time: i64 (93..101)
+  const verificationLevel = data.readUInt8(40);
+  if (verificationLevel !== 1) {
+    // 1 is VerificationLevel::Full
+    throw new Error(
+      `Pyth price update is not fully verified (verification_level=${verificationLevel}, expected Full=1)`,
+    );
+  }
+
   const rawPrice = data.readBigInt64LE(73);
+  if (rawPrice <= 0n) {
+    throw new Error(`Pyth oracle price is non-positive: ${rawPrice}`);
+  }
+
+  const conf = data.readBigUInt64LE(81);
+  if (conf >= BigInt(rawPrice)) {
+    throw new Error(
+      `Pyth oracle confidence (${conf}) exceeds or equals price (${rawPrice})`,
+    );
+  }
+
   const exponent = data.readInt32LE(89);
+  if (exponent < -12 || exponent > 0) {
+    throw new Error(
+      `Unsupported Pyth price exponent: ${exponent} (allowed range: -12..0)`,
+    );
+  }
+
   const publishTime = data.readBigInt64LE(93);
+  const now = BigInt(referenceTimestamp ?? Math.floor(Date.now() / 1000));
+  const age = now - publishTime;
+
+  if (age < 0n) {
+    throw new Error(
+      `Pyth oracle price timestamp is in the future: publishTime=${publishTime}, now=${now}`,
+    );
+  }
+  if (maxAgeSeconds > 0 && age > BigInt(maxAgeSeconds)) {
+    throw new Error(
+      `Pyth oracle price is stale: age=${age}s > maxAge=${maxAgeSeconds}s`,
+    );
+  }
 
   const scaleDelta = exponent + 6;
   let normalizedPrice: bigint;
@@ -133,6 +201,17 @@ export function parsePythPriceUpdateV2(data: Buffer): {
     normalizedPrice = rawPrice / 10n ** BigInt(-scaleDelta);
   }
 
+  if (normalizedPrice <= 0n) {
+    throw new Error(
+      `Normalized oracle price truncated to zero: rawPrice=${rawPrice}, exponent=${exponent}`,
+    );
+  }
+  if (normalizedPrice > 0xffff_ffff_ffff_ffffn) {
+    throw new Error(
+      `Normalized oracle price overflowed u64: ${normalizedPrice}`,
+    );
+  }
+
   return { normalizedPrice, publishTime };
 }
 
@@ -140,8 +219,29 @@ export function notionalForSize(
   sizeDelta: bigint,
   normalizedPrice: bigint,
 ): bigint {
+  if (sizeDelta <= 0n) {
+    throw new Error(`Position size must be greater than zero: sizeDelta=${sizeDelta}`);
+  }
+  if (normalizedPrice <= 0n) {
+    throw new Error(`Price must be greater than zero: normalizedPrice=${normalizedPrice}`);
+  }
+
   const QUANTITY_SCALE = 1_000_000n;
-  return (sizeDelta * normalizedPrice) / QUANTITY_SCALE;
+  const product = sizeDelta * normalizedPrice;
+  const notional = product / QUANTITY_SCALE;
+
+  if (notional <= 0n) {
+    throw new Error(
+      `Notional calculation truncated to zero: sizeDelta=${sizeDelta}, normalizedPrice=${normalizedPrice}`,
+    );
+  }
+  if (notional > 0xffff_ffff_ffff_ffffn) {
+    throw new Error(
+      `Calculated notional overflowed u64: ${notional}`,
+    );
+  }
+
+  return notional;
 }
 
 export function deriveUserVaultAddress(

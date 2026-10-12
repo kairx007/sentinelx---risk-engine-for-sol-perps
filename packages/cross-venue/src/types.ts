@@ -20,17 +20,34 @@ export interface VenueSnapshot {
   };
 }
 
+export interface DivergenceMetric {
+  /** Raw observed value (e.g. price coefficient of variation in percent). */
+  value: number | null;
+  /** Normalized risk score (0–100) via threshold interpolation. */
+  score: number | null;
+  /** Configured weight used in the weighted-average aggregation. */
+  weight: number;
+  /**
+   * This metric's contribution to the final ecosystem score.
+   * Computed as (score × weight) / totalApplicableWeight.
+   * Null when the score is unavailable.
+   */
+  contribution: number | null;
+  /** Human-readable description of the divergence observation. */
+  driver: string;
+}
+
 export interface CrossVenueDivergence {
   /** Coefficient of variation (std dev / mean) of prices, as percent. */
-  price: number | null;
+  price: DivergenceMetric | null;
   /** Std dev of funding rates across venues. */
-  funding: number | null;
+  funding: DivergenceMetric | null;
   /** Herfindahl index of OI share (0 = even, 1 = single venue). */
-  oiConcentration: number | null;
+  oiConcentration: DivergenceMetric | null;
   /** Spread range (max - min) across venues, in percent. */
-  liquiditySpread: number | null;
+  liquiditySpread: DivergenceMetric | null;
   /** Herfindahl index of liquidation share. */
-  liquidationConcentration: number | null;
+  liquidationConcentration: DivergenceMetric | null;
 }
 
 export interface CrossVenueRisk {

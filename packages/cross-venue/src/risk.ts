@@ -2,6 +2,7 @@ import type {
   CrossVenueRisk,
   CrossVenueDivergence,
   VenueSnapshot,
+  DivergenceMetric,
 } from "./types.js";
 import type { MarketRisk, RiskLevel } from "@perps-risk/risk";
 import type { RiskThresholds } from "@perps-risk/risk";
@@ -26,19 +27,20 @@ import {
   crossVenueWeights,
 } from "./config.js";
 
-interface ComponentScore {
-  value: number | null;
-  score: number | null;
-  driver: string;
-}
-
-function scoreDivergence(
+function buildDivergenceMetric(
   result: DivergenceResult,
   thresholds: RiskThresholds,
-  key: string,
-): ComponentScore {
-  const score = scoreFromThresholds(result.value, thresholds[key] ?? []);
-  return { value: result.value, score, driver: result.driver };
+  metricKey: string,
+  weight: number,
+): DivergenceMetric {
+  const score = scoreFromThresholds(result.value, thresholds[metricKey] ?? []);
+  return {
+    value: result.value,
+    score,
+    driver: result.driver,
+    weight,
+    contribution: null,
+  };
 }
 
 export function calculateCrossVenueRisk(
@@ -71,42 +73,64 @@ export function calculateCrossVenueRisk(
     };
   }
 
-  // Compute divergences
-  const priceDiv = scoreDivergence(
+  // Compute divergence metrics with scores, weights, and driver strings
+  const priceDiv = buildDivergenceMetric(
     priceDivergence(sorted),
     priceDivergenceThresholds,
     "priceDivergence",
+    crossVenueWeights.price,
   );
-  const fundDiv = scoreDivergence(
+  const fundDiv = buildDivergenceMetric(
     fundingDivergence(sorted),
     fundingDivergenceThresholds,
     "fundingDivergence",
+    crossVenueWeights.funding,
   );
-  const oiDiv = scoreDivergence(
+  const oiDiv = buildDivergenceMetric(
     oiConcentration(sorted),
     oiConcentrationThresholds,
     "oiConcentration",
+    crossVenueWeights.oiConcentration,
   );
-  const liqDiv = scoreDivergence(
+  const liqDiv = buildDivergenceMetric(
     liquiditySpreadDivergence(sorted),
     liquidityDivergenceThresholds,
     "liquidityDivergence",
+    crossVenueWeights.liquiditySpread,
   );
-  const liqConcDiv = scoreDivergence(
+  const liqConcDiv = buildDivergenceMetric(
     liquidationConcentration(sorted),
-    oiConcentrationThresholds, // reuse OI concentration thresholds
+    oiConcentrationThresholds,
     "oiConcentration",
+    crossVenueWeights.liquidationConcentration,
   );
 
+  // Assemble the divergence record
   const divergence: CrossVenueDivergence = {
-    price: priceDiv.value,
-    funding: fundDiv.value,
-    oiConcentration: oiDiv.value,
-    liquiditySpread: liqDiv.value,
-    liquidationConcentration: liqConcDiv.value,
+    price: priceDiv,
+    funding: fundDiv,
+    oiConcentration: oiDiv,
+    liquiditySpread: liqDiv,
+    liquidationConcentration: liqConcDiv,
   };
 
-  // Combine into ecosystem score
+  // Compute contribution for each metric based on the aggregation formula:
+  //   contribution = (score × weight) / totalApplicableWeight
+  // where totalApplicableWeight is the sum of weights for metrics that have a score.
+  const metrics = [priceDiv, fundDiv, oiDiv, liqDiv, liqConcDiv];
+  const totalWeight = metrics
+    .filter((m) => m.score !== null)
+    .reduce((sum, m) => sum + m.weight, 0);
+
+  if (totalWeight > 0) {
+    for (const m of metrics) {
+      if (m.score !== null) {
+        m.contribution = Math.round((m.score * m.weight) / totalWeight);
+      }
+    }
+  }
+
+  // Compute ecosystem score via weighted average
   const scores: Record<string, number | null> = {
     price: priceDiv.score,
     funding: fundDiv.score,

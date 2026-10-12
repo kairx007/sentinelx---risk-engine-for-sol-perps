@@ -41,6 +41,9 @@ export function UserTransactionPanel({
   const [txStatus, setTxStatus] = useState<string | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
 
+  const [airdropping, setAirdropping] = useState(false);
+  const [airdropMsg, setAirdropMsg] = useState<string | null>(null);
+
   const riskState = chainSnapshot.riskState;
   const maxLeverage = riskState ? riskState.maxLeverageX100 / 100 : 2.0;
 
@@ -54,6 +57,35 @@ export function UserTransactionPanel({
   const exceedsCap =
     activeTab === "increase" && requestedLeverage > maxLeverage;
 
+  const handleAirdrop = async () => {
+    if (!wallet.connected || !wallet.publicKey) {
+      await wallet.connect();
+      return;
+    }
+    setAirdropping(true);
+    setAirdropMsg("Requesting 100 test USDC airdrop from Devnet faucet…");
+    setTxError(null);
+    try {
+      const res = await fetch("/api/faucet/usdc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient: wallet.publicKey.toBase58() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Faucet request failed.");
+      }
+      setAirdropMsg(
+        `Received 100 Test USDC! (Tx: ${data.txSignature?.slice(0, 8)}…)`,
+      );
+    } catch (err: any) {
+      setTxError(err.message || "Failed to airdrop test USDC.");
+      setAirdropMsg(null);
+    } finally {
+      setAirdropping(false);
+    }
+  };
+
   const handleSimulateAndSend = async () => {
     if (!wallet.connected || !wallet.publicKey) {
       await wallet.connect();
@@ -66,12 +98,13 @@ export function UserTransactionPanel({
 
     try {
       const rpcUrl =
-        import.meta.env.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com";
+        (import.meta as any).env?.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com";
       const connection = new Connection(rpcUrl, "confirmed");
 
       const collateralMint = new PublicKey(
         chainSnapshot.vault?.collateralMint ||
-          "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+          (import.meta as any).env?.VITE_COLLATERAL_MINT ||
+          "49rjDqfTwbMZhiayCRaRWhtUyoduSWSzQTD2FdV12xxx",
       );
       const market = new PublicKey(DEFAULT_SOL_PERP_MARKET);
       const oracleUpdateAccount = new PublicKey(DEFAULT_PYTH_FEED);
@@ -88,10 +121,25 @@ export function UserTransactionPanel({
       );
       const userAtaInfo = await connection.getAccountInfo(userAta);
 
+      // Check whether user has 0 shares
+      let userShares = 0n;
+      if (userVaultInfo) {
+        try {
+          const decoded = decodeUserVaultAccount(userVaultInfo.data);
+          userShares = decoded.shares;
+        } catch {
+          userShares = 0n;
+        }
+      }
+
       const transaction = new Transaction();
 
-      // Ensure user ATA exists if performing a deposit
-      if (!userAtaInfo && activeTab === "deposit") {
+      // Ensure user ATA exists if performing a deposit or if auto-depositing
+      const needsDeposit =
+        activeTab === "deposit" ||
+        (activeTab === "increase" && (!userVaultInfo || userShares === 0n));
+
+      if (!userAtaInfo && needsDeposit) {
         setTxStatus("Creating Associated Token Account for collateral…");
         const createAtaIx = createAssociatedTokenAccountInstruction(
           wallet.publicKey,
@@ -114,6 +162,22 @@ export function UserTransactionPanel({
         transaction.add(initUserVaultIx);
       }
 
+      // If user has zero shares on increase, automatically prepend a deposit of the initial collateral!
+      if (activeTab === "increase" && (!userVaultInfo || userShares === 0n)) {
+        setTxStatus(
+          "No vault shares found. Auto-depositing initial margin…",
+        );
+        const depositAmountAtoms = BigInt(
+          Math.max(100, Math.round(parsedCollateral)) * 1_000_000,
+        );
+        const autoDepositIx = buildDepositInstruction({
+          owner: wallet.publicKey,
+          collateralMint,
+          amount: depositAmountAtoms,
+        });
+        transaction.add(autoDepositIx);
+      }
+
       let ix;
       if (activeTab === "deposit") {
         const parsedDeposit = parseFloat(depositAmount) || 100;
@@ -124,18 +188,34 @@ export function UserTransactionPanel({
           amount: depositAtoms,
         });
       } else if (activeTab === "increase") {
+        if (parsedSize <= 0 || isNaN(parsedSize)) {
+          throw new Error("Position size must be greater than zero.");
+        }
+        if (parsedCollateral <= 0 || isNaN(parsedCollateral)) {
+          throw new Error("Collateral deposit must be greater than zero.");
+        }
+
         setTxStatus("Fetching current oracle price from Pyth…");
         const oracleInfo = await connection.getAccountInfo(oracleUpdateAccount);
         if (!oracleInfo) {
           throw new Error("Unable to read Pyth oracle account from cluster.");
         }
-        const { normalizedPrice } = parsePythPriceUpdateV2(oracleInfo.data);
+        const { normalizedPrice, publishTime } = parsePythPriceUpdateV2(oracleInfo.data);
 
         const sizeDelta = BigInt(Math.round(parsedSize * 1_000_000));
         const notionalDelta = notionalForSize(sizeDelta, normalizedPrice);
         const collateralDelta = BigInt(
           Math.round(parsedCollateral * 1_000_000),
         );
+
+        console.log("[Diagnostic: IncreasePosition]", {
+          sizeDelta: sizeDelta.toString(),
+          normalizedPrice: normalizedPrice.toString(),
+          publishTime: publishTime.toString(),
+          notionalDelta: notionalDelta.toString(),
+          collateralDelta: collateralDelta.toString(),
+          side: side === PositionSide.Long ? "LONG" : "SHORT",
+        });
 
         ix = buildIncreasePositionInstruction({
           owner: wallet.publicKey,
@@ -148,15 +228,26 @@ export function UserTransactionPanel({
           collateralDelta,
         });
       } else if (activeTab === "reduce") {
+        if (parsedSize <= 0 || isNaN(parsedSize)) {
+          throw new Error("Size to reduce must be greater than zero.");
+        }
+
         setTxStatus("Fetching current oracle price from Pyth…");
         const oracleInfo = await connection.getAccountInfo(oracleUpdateAccount);
         if (!oracleInfo) {
           throw new Error("Unable to read Pyth oracle account from cluster.");
         }
-        const { normalizedPrice } = parsePythPriceUpdateV2(oracleInfo.data);
+        const { normalizedPrice, publishTime } = parsePythPriceUpdateV2(oracleInfo.data);
 
         const sizeDelta = BigInt(Math.round(parsedSize * 1_000_000));
         const notionalDelta = notionalForSize(sizeDelta, normalizedPrice);
+
+        console.log("[Diagnostic: ReducePosition]", {
+          sizeDelta: sizeDelta.toString(),
+          normalizedPrice: normalizedPrice.toString(),
+          publishTime: publishTime.toString(),
+          notionalDelta: notionalDelta.toString(),
+        });
 
         ix = buildReducePositionInstruction({
           owner: wallet.publicKey,
@@ -182,10 +273,28 @@ export function UserTransactionPanel({
       transaction.feePayer = wallet.publicKey;
 
       // Pre-flight simulation
-      const simulation = await connection.simulateTransaction(transaction);
+      let simulation = await connection.simulateTransaction(transaction);
       if (simulation.value.err) {
+        const errorLogs = simulation.value.logs?.join(" ") || "";
+        if (errorLogs.includes("RiskStateStale") || errorLogs.includes("6021") || errorLogs.includes("0x1785")) {
+          setTxStatus("On-chain RiskState expired (>300s). Refreshing risk pulse…");
+          try {
+            await fetch("/api/risk/publish-pulse", { method: "POST" });
+            // Re-simulate with fresh risk state
+            const { blockhash: newBlockhash } = await connection.getLatestBlockhash("confirmed");
+            transaction.recentBlockhash = newBlockhash;
+            simulation = await connection.simulateTransaction(transaction);
+          } catch {
+            // Proceed to standard error handling if pulse fails
+          }
+        }
+      }
+
+      if (simulation.value.err) {
+        console.error("Simulation error:", simulation.value.err, "Logs:", simulation.value.logs);
+        const detailedLogs = simulation.value.logs?.filter((l) => l.includes("Error") || l.includes("failed") || l.includes("Program log"))?.join(" | ");
         throw new Error(
-          `On-chain simulation rejected: ${JSON.stringify(simulation.value.err)}`,
+          `On-chain simulation rejected: ${JSON.stringify(simulation.value.err)}${detailedLogs ? ` (${detailedLogs})` : ""}`,
         );
       }
 
@@ -380,10 +489,11 @@ export function UserTransactionPanel({
         </div>
       )}
 
+      {airdropMsg && <div className="tx-status-notice" style={{ color: "var(--color-accent-teal, #10b981)" }}>{airdropMsg}</div>}
       {txStatus && <div className="tx-status-notice">{txStatus}</div>}
       {txError && <div className="tx-error-notice">{txError}</div>}
 
-      <div className="tx-actions">
+      <div className="tx-actions" style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
         {!wallet.connected ? (
           <button
             type="button"
@@ -393,18 +503,29 @@ export function UserTransactionPanel({
             Connect Wallet to Transact
           </button>
         ) : (
-          <button
-            type="button"
-            className="button button-primary tx-submit-btn"
-            onClick={handleSimulateAndSend}
-            disabled={simulating || exceedsCap}
-          >
-            {simulating
-              ? "Simulating…"
-              : exceedsCap
-                ? "Exceeds Leverage Cap"
-                : `Simulate & Submit ${activeTab.toUpperCase()}`}
-          </button>
+          <>
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={handleAirdrop}
+              disabled={airdropping}
+              title="Airdrop 100 test USDC to your connected wallet"
+            >
+              {airdropping ? "Airdropping 100 USDC…" : "💧 Airdrop 100 Test USDC"}
+            </button>
+            <button
+              type="button"
+              className="button button-primary tx-submit-btn"
+              onClick={handleSimulateAndSend}
+              disabled={simulating || exceedsCap}
+            >
+              {simulating
+                ? "Simulating…"
+                : exceedsCap
+                  ? "Exceeds Leverage Cap"
+                  : `Simulate & Submit ${activeTab.toUpperCase()}`}
+            </button>
+          </>
         )}
       </div>
     </section>

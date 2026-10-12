@@ -196,6 +196,16 @@ mod tests {
                 .to_string()
                 .contains("StaleOraclePrice")
         );
+
+        let mut cfg_800 = config();
+        cfg_800.max_age_seconds = 800;
+        assert!(validate_pyth_price(&update(1_000_000, 0, -6, 100), &cfg_800, ACCOUNT, 900).is_ok());
+        assert!(
+            validate_pyth_price(&update(1_000_000, 0, -6, 100), &cfg_800, ACCOUNT, 901)
+                .unwrap_err()
+                .to_string()
+                .contains("StaleOraclePrice")
+        );
     }
 
     #[test]

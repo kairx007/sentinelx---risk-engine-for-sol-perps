@@ -176,6 +176,25 @@ function EcosystemView({
         </div>
         <Badge tone="neutral">{snapshot?.source ?? "LIVE"} SNAPSHOT</Badge>
       </div>
+      <section className="card explainer-card">
+        <div className="explainer-header">
+          <span className="mini-icon blue">
+            <Icon name="pulse" size={16} />
+          </span>
+          <h3>Understanding Ecosystem Risk vs. Market Risk</h3>
+        </div>
+        <p className="explainer-text">
+          <strong>Why the scores differ:</strong> Market risk measures the health of an individual market
+          (orderbook depth, local volatility, and liquidations). Ecosystem risk measures cross-venue divergence
+          (price dislocations, funding disparities, and open interest concentration across venues).
+        </p>
+        <p className="explainer-text">
+          <strong>Effective policy risk:</strong> The policy decision uses the maximum of the venue market-risk
+          scores and ecosystem score (<code>Math.max(...)</code>) to ensure localized stress or systemic divergence
+          immediately enforces protective leverage caps.
+        </p>
+      </section>
+
       <section className="hero-card">
         <div className="hero-copy">
           <div className="eyebrow">ECOSYSTEM RISK</div>
@@ -216,8 +235,8 @@ function EcosystemView({
       </section>
       <div className="section-heading">
         <div>
-          <h2>Venue risk</h2>
-          <p>Market observations and per-venue risk scores.</p>
+          <h2>Per-venue market risk</h2>
+          <p>Market observations and individual venue risk scores from live API data.</p>
         </div>
         <button className="text-button" onClick={() => onMarket()}>
           View market details <Icon name="chevron" size={14} />
@@ -280,26 +299,79 @@ function EcosystemView({
               <span className="mini-icon blue">
                 <Icon name="chart" size={16} />
               </span>
-              <h2>Cross-venue divergence</h2>
+              <h2>Cross-venue divergence breakdown</h2>
             </div>
+            <span className="muted">5 Divergence Metrics</span>
           </div>
-          <MetricLine
-            label="Price"
-            value={ecosystem?.divergence.price}
+          <DivergenceRow
+            label="Price divergence"
+            metric={ecosystem?.divergence.price}
             suffix="%"
+            defaultWeight={1.0}
           />
-          <MetricLine label="Funding" value={ecosystem?.divergence.funding} />
-          <MetricLine
+          <DivergenceRow
+            label="Funding divergence"
+            metric={ecosystem?.divergence.funding}
+            suffix="%"
+            defaultWeight={1.0}
+          />
+          <DivergenceRow
             label="OI concentration"
-            value={ecosystem?.divergence.oiConcentration}
+            metric={ecosystem?.divergence.oiConcentration}
+            defaultWeight={1.2}
           />
-          <MetricLine
+          <DivergenceRow
             label="Liquidity spread"
-            value={ecosystem?.divergence.liquiditySpread}
+            metric={ecosystem?.divergence.liquiditySpread}
             suffix="%"
+            defaultWeight={0.8}
+          />
+          <DivergenceRow
+            label="Liquidation concentration"
+            metric={ecosystem?.divergence.liquidationConcentration}
+            defaultWeight={1.0}
           />
         </section>
       </div>
+
+      <details className="card methodology-card">
+        <summary className="methodology-summary">
+          <span>Calculation methodology &amp; weighting</span>
+          <Icon name="chevron" size={14} />
+        </summary>
+        <div className="methodology-content">
+          <h4>Threshold Interpolation</h4>
+          <p>
+            Observed raw metric values (e.g., price coefficient of variation in percent, funding rate standard deviation)
+            are normalized into bounded risk scores (0–100) using piecewise linear interpolation against calibrated risk threshold profiles.
+          </p>
+          <h4>Weighted-Average Aggregation</h4>
+          <p>
+            The composite ecosystem score aggregates all available divergence scores using a normalized weighted average:
+          </p>
+          <div className="formula-box">
+            <code>Ecosystem Score = &Sigma;(Score<sub>i</sub> &times; Weight<sub>i</sub>) / &Sigma;(Applicable Weight)</code>
+          </div>
+          <h4>Configured Weights</h4>
+          <ul>
+            <li><strong>Price divergence:</strong> 1.0</li>
+            <li><strong>Funding divergence:</strong> 1.0</li>
+            <li><strong>OI concentration:</strong> 1.2</li>
+            <li><strong>Liquidity spread:</strong> 0.8</li>
+            <li><strong>Liquidation concentration:</strong> 1.0</li>
+          </ul>
+          <h4>Missing Data Handling</h4>
+          <p>
+            Metrics with missing feeds or insufficient comparative data (e.g., single venue observations) display as <code>N/A</code>.
+            They are excluded from the total applicable weight denominator and are never fabricated or treated as zero risk.
+          </p>
+          <h4>Effective Policy Risk Gating</h4>
+          <p>
+            The final policy decision evaluates <code>Math.max(Venue Risk<sub>Velocity</sub>, Venue Risk<sub>Phoenix</sub>, Ecosystem Risk)</code>.
+            If either an individual venue or the cross-venue ecosystem experiences elevated risk, the maximum governs system leverage caps and collateral requirements.
+          </p>
+        </div>
+      </details>
       <PolicyPanel snapshot={snapshot} />
     </>
   );
@@ -369,6 +441,69 @@ function VenueRow({ item, onClick }: { item: Venue; onClick: () => void }) {
   );
 }
 
+function DivergenceRow({
+  label,
+  metric,
+  suffix = "",
+  defaultWeight,
+}: {
+  label: string;
+  metric:
+    | {
+        value: number | null;
+        score: number | null;
+        weight: number;
+        contribution: number | null;
+        driver?: string | undefined;
+      }
+    | null
+    | undefined;
+  suffix?: string;
+  defaultWeight: number;
+}) {
+  const valueDisplay =
+    metric?.value != null ? `${formatNumber(metric.value)}${suffix}` : "N/A";
+  const scoreDisplay = metric?.score != null ? `${metric.score}/100` : "N/A";
+  const weightDisplay =
+    metric?.weight != null
+      ? `${formatNumber(metric.weight, { maximumFractionDigits: 1 })}×`
+      : `${formatNumber(defaultWeight, { maximumFractionDigits: 1 })}×`;
+  const contributionDisplay =
+    metric?.contribution != null ? `${metric.contribution} pts` : "N/A";
+
+  return (
+    <div className="divergence-row">
+      <div className="divergence-row-header">
+        <span className="divergence-label">{label}</span>
+        <span className="divergence-metrics">
+          <span className="divergence-metric-item" title="Raw observed value">
+            <small>Val: </small>
+            <strong>{valueDisplay}</strong>
+          </span>
+          <span
+            className="divergence-metric-item"
+            title="Normalized risk score (0-100)"
+          >
+            <small>Score: </small>
+            <strong>{scoreDisplay}</strong>
+          </span>
+          <span className="divergence-metric-item" title="Configured weight">
+            <small>Wt: </small>
+            <strong>{weightDisplay}</strong>
+          </span>
+          <span className="divergence-metric-item" title="Score contribution">
+            <small>Contrib: </small>
+            <strong>{contributionDisplay}</strong>
+          </span>
+        </span>
+      </div>
+      {metric?.driver ? (
+        <div className="divergence-driver">{metric.driver}</div>
+      ) : null}
+    </div>
+  );
+}
+
 function MetricLine({
   label,
   value,
@@ -427,8 +562,9 @@ function PolicyPanel({ snapshot }: { snapshot: DashboardSnapshot | null }) {
         </div>
       )}
       <p className="policy-note">
-        Calculated off-chain policy output. Compare with the separately verified
-        on-chain RiskState below.
+        <strong>Effective policy risk:</strong> Evaluates the maximum of individual venue market-risk
+        scores and the cross-venue ecosystem score (<code>Math.max(...)</code>). This governing score
+        determines the on-chain max leverage cap. Compare with the separately verified on-chain RiskState below.
       </p>
     </section>
   );

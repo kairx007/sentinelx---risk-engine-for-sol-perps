@@ -69,7 +69,9 @@ describe("calculateCrossVenueRisk", () => {
     const result = calculateCrossVenueRisk("SOL", snapshots);
 
     expect(result.divergence.price).not.toBeNull();
-    expect(result.divergence.price!).toBeGreaterThan(3);
+    expect(result.divergence.price!.value).not.toBeNull();
+    expect(result.divergence.price!.value!).toBeGreaterThan(3);
+    expect(result.divergence.price!.score).toBeGreaterThan(0);
     expect(result.riskDrivers.some((d) => d.includes("Price divergence"))).toBe(
       true,
     );
@@ -101,7 +103,10 @@ describe("calculateCrossVenueRisk", () => {
     const result = calculateCrossVenueRisk("SOL", snapshots);
 
     expect(result.divergence.oiConcentration).not.toBeNull();
-    expect(result.divergence.oiConcentration!).toBeGreaterThan(0.8);
+    expect(result.divergence.oiConcentration!.value).not.toBeNull();
+    expect(result.divergence.oiConcentration!.value!).toBeGreaterThan(0.8);
+    expect(result.divergence.oiConcentration!.score).toBeGreaterThan(0);
+    expect(result.divergence.oiConcentration!.weight).toBeGreaterThan(0);
     expect(result.riskDrivers.some((d) => d.includes("concentration"))).toBe(
       true,
     );
@@ -157,7 +162,10 @@ describe("calculateCrossVenueRisk", () => {
     const result = calculateCrossVenueRisk("SOL", snapshots);
 
     expect(result.divergence.liquiditySpread).not.toBeNull();
-    expect(result.divergence.liquiditySpread!).toBeGreaterThan(0);
+    expect(result.divergence.liquiditySpread!.value).not.toBeNull();
+    expect(result.divergence.liquiditySpread!.value!).toBeGreaterThan(0);
+    expect(result.divergence.liquiditySpread!.score).toBeGreaterThan(0);
+    expect(result.divergence.liquiditySpread!.weight).toBeGreaterThan(0);
     expect(result.riskDrivers.some((d) => d.includes("spread"))).toBe(true);
   });
 
@@ -222,3 +230,226 @@ describe("calculateCrossVenueRisk", () => {
     expect(typed.ecosystemScore).not.toBeNull();
   });
 });
+
+// ─── Divergence score / weight / contribution tests ────────────────────────
+
+import {
+  crossVenueWeights,
+  priceDivergenceThresholds,
+  fundingDivergenceThresholds,
+  oiConcentrationThresholds,
+  liquidityDivergenceThresholds,
+} from "../src/config.js";
+
+describe("divergence scores, weights, and contributions", () => {
+  const SECONDS_PER_YEAR = 365.25 * 24 * 3600;
+
+  function makeMetric(
+    price: number,
+    oi: number,
+    annualizedFundingPct: number,
+    fundingPeriodSeconds: number,
+    spread: number,
+    liquidations: number | null = null,
+  ): VenueSnapshot {
+    const rate =
+      (annualizedFundingPct / 100) *
+      (fundingPeriodSeconds / SECONDS_PER_YEAR);
+    return {
+      venue: "velocity",
+      symbol: "VELOCITY-PERP",
+      state: {} as never,
+      risk: null,
+      metrics: { price, oi, longOi: oi / 2, shortOi: oi / 2, funding: rate, fundingPeriod: fundingPeriodSeconds, spread, liquidations },
+    };
+  }
+
+  it("returns a score between 0-100 for each available divergence metric", () => {
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01, 100),
+      makeMetric(120.05, 8_000, 10.5, 86400, 0.012, 80),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    for (const key of [
+      "price",
+      "funding",
+      "oiConcentration",
+      "liquiditySpread",
+      "liquidationConcentration",
+    ] as const) {
+      const m = result.divergence[key]!;
+      expect(m).not.toBeNull();
+      expect(m!.score).not.toBeNull();
+      expect(m!.score).toBeGreaterThanOrEqual(0);
+      expect(m!.score).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it("assigns the correct weight from crossVenueWeights", () => {
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+      makeMetric(120.05, 8_000, 10.5, 86400, 0.012),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    expect(result.divergence.price!.weight).toBe(crossVenueWeights.price);
+    expect(result.divergence.funding!.weight).toBe(crossVenueWeights.funding);
+    expect(result.divergence.oiConcentration!.weight).toBe(
+      crossVenueWeights.oiConcentration,
+    );
+    expect(result.divergence.liquiditySpread!.weight).toBe(
+      crossVenueWeights.liquiditySpread,
+    );
+    expect(result.divergence.liquidationConcentration!.weight).toBe(
+      crossVenueWeights.liquidationConcentration,
+    );
+  });
+
+  it("computes contributions that sum to the final ecosystem score (within rounding)", () => {
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+      makeMetric(120.05, 8_000, 10.5, 86400, 0.012),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    const contributions = Object.values(result.divergence)
+      .filter((m): m is NonNullable<typeof m> => m !== null)
+      .map((m) => m.contribution);
+
+    const sum = contributions.reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(result.ecosystemScore as number, 0);
+  });
+
+  it("sets contribution to null when score is null", () => {
+    // Single venue → all divergence metrics return null scores
+    const result = calculateCrossVenueRisk("SOL", [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+    ]);
+
+    for (const key of [
+      "price",
+      "funding",
+      "oiConcentration",
+      "liquiditySpread",
+      "liquidationConcentration",
+    ] as const) {
+      expect(result.divergence[key]).toBeNull();
+    }
+  });
+
+  it("exposes the raw value alongside the score", () => {
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+      makeMetric(120.05, 8_000, 10.5, 86400, 0.012),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    expect(result.divergence.price!.value).not.toBeNull();
+    expect(result.divergence.price!.score).not.toBeNull();
+    // price CV should be very small for nearly identical prices
+    expect(result.divergence.price!.value!).toBeLessThan(0.1);
+  });
+
+  it("computes correct contributions for a deterministic stress fixture", () => {
+    // Construct a fixture where we can predict the divergence values and scores.
+    const snapshots = [
+      makeMetric(100.0, 100_000, 10, 86400, 0.01),
+      makeMetric(110.0, 5_000, 100, 3600, 2.0),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    // Verify metrics with available data have non-null scores and contributions.
+    // Liquidation concentration may be null if venues don't have liquidation data.
+    const metricsWithData: (keyof typeof result.divergence)[] = [
+      "price",
+      "funding",
+      "oiConcentration",
+      "liquiditySpread",
+    ];
+
+    for (const key of metricsWithData) {
+      const m = result.divergence[key]!;
+      expect(m).not.toBeNull();
+      expect(m!.score).not.toBeNull();
+      expect(m!.score).toBeGreaterThan(0);
+      expect(m!.contribution).not.toBeNull();
+      expect(m!.contribution).toBeGreaterThan(0);
+    }
+
+    const contributions = Object.values(result.divergence)
+      .filter((m): m is NonNullable<typeof m> => m !== null && m.contribution !== null)
+      .map((m) => m.contribution!);
+    const sum = contributions.reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(result.ecosystemScore as number, 0);
+  });
+
+  it("returns a metric object with null score when a data source is missing", () => {
+    // When one venue lacks spread data, liquidity spread divergence has null score
+    // but is still represented as a metric object (not null) for the two-venue comparison.
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+      makeMetric(120.05, 8_000, 10.5, 86400, null as any),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    expect(result.divergence.liquiditySpread).not.toBeNull();
+    expect(result.divergence.liquiditySpread!.score).toBeNull();
+    expect(result.divergence.liquiditySpread!.value).toBeNull();
+    expect(result.divergence.liquiditySpread!.contribution).toBeNull();
+    expect(result.divergence.liquiditySpread!.weight).toBe(
+      crossVenueWeights.liquiditySpread,
+    );
+  });
+
+  it("returns a driver string for each metric", () => {
+    const snapshots = [
+      makeMetric(120.0, 10_000, 10, 86400, 0.01),
+      makeMetric(120.05, 8_000, 10.5, 86400, 0.012),
+    ];
+
+    const result = calculateCrossVenueRisk("SOL", snapshots);
+
+    for (const key of [
+      "price",
+      "funding",
+      "oiConcentration",
+      "liquiditySpread",
+      "liquidationConcentration",
+    ] as const) {
+      expect(result.divergence[key]!.driver.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("handles boundary divergence scores (0 and 100)", () => {
+    // Exact identical venues -> divergence = 0 -> score = 0
+    const zeroDivergence = [
+      makeMetric(100.0, 10_000, 10, 86400, 0.01, 500),
+      makeMetric(100.0, 10_000, 10, 86400, 0.01, 500),
+    ];
+    const zeroResult = calculateCrossVenueRisk("SOL", zeroDivergence);
+    expect(zeroResult.divergence.price!.score).toBe(0);
+    expect(zeroResult.divergence.funding!.score).toBe(0);
+    expect(zeroResult.divergence.liquiditySpread!.score).toBe(0);
+
+    // Extreme divergent venues -> extreme divergence -> score = 100
+    const extremeDivergence = [
+      makeMetric(100.0, 1_000_000, 0, 86400, 0.01, 1000),
+      makeMetric(200.0, 1, 200, 86400, 10.0, 1),
+    ];
+    const extremeResult = calculateCrossVenueRisk("SOL", extremeDivergence);
+    expect(extremeResult.divergence.price!.score).toBe(100);
+    expect(extremeResult.divergence.funding!.score).toBe(100);
+    expect(extremeResult.divergence.liquiditySpread!.score).toBe(100);
+    expect(Math.round(extremeResult.divergence.oiConcentration!.score!)).toBe(100);
+    expect(Math.round(extremeResult.divergence.liquidationConcentration!.score!)).toBe(100);
+  });
+});
+
+

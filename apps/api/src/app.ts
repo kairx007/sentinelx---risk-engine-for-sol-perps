@@ -106,6 +106,171 @@ export function createApiApp(
     response.json(DashboardSnapshotSchema.parse(snapshot));
   });
 
+  app.post("/faucet/usdc", express.json(), async (request, response, next) => {
+    try {
+      const recipientStr = request.body?.recipient;
+      if (!recipientStr || typeof recipientStr !== "string") {
+        throw new ApiError(400, "INVALID_REQUEST", "Recipient address is required.");
+      }
+
+      const {
+        Connection,
+        PublicKey,
+        Keypair,
+        Transaction,
+        sendAndConfirmTransaction,
+      } = await import("@solana/web3.js");
+      const {
+        getAssociatedTokenAddressSync,
+        createAssociatedTokenAccountInstruction,
+        createSplTokenTransferInstruction,
+      } = await import("../../dashboard/src/solana/transactions.js");
+      const fs = await import("fs");
+      const path = await import("path");
+      const os = await import("os");
+
+      const recipient = new PublicKey(recipientStr.trim());
+      const collateralMintStr =
+        process.env.VITE_COLLATERAL_MINT ||
+        "49rjDqfTwbMZhiayCRaRWhtUyoduSWSzQTD2FdV12xxx";
+      const collateralMint = new PublicKey(collateralMintStr);
+
+      const keypairPath =
+        process.env.DEVNET_KEYPAIR_PATH ||
+        path.join(os.homedir(), ".config/solana/id.json");
+      if (!fs.existsSync(keypairPath)) {
+        throw new ApiError(503, "VENUE_UNAVAILABLE", "Deployer faucet keypair not found.");
+      }
+      const secret = JSON.parse(fs.readFileSync(keypairPath, "utf-8"));
+      const payer = Keypair.fromSecretKey(new Uint8Array(secret));
+
+      const rpcUrl =
+        process.env.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com";
+      const connection = new Connection(rpcUrl, "confirmed");
+
+      const senderAta = getAssociatedTokenAddressSync(collateralMint, payer.publicKey);
+      const recipientAta = getAssociatedTokenAddressSync(collateralMint, recipient);
+
+      const tx = new Transaction();
+      const recipientAtaInfo = await connection.getAccountInfo(recipientAta);
+      if (!recipientAtaInfo) {
+        tx.add(
+          createAssociatedTokenAccountInstruction(
+            payer.publicKey,
+            recipientAta,
+            recipient,
+            collateralMint,
+          ),
+        );
+      }
+
+      // Transfer 100 fake USDC (100 * 1_000_000 atoms)
+      const amountAtoms = 100_000_000n;
+      tx.add(
+        createSplTokenTransferInstruction(
+          senderAta,
+          recipientAta,
+          payer.publicKey,
+          amountAtoms,
+        ),
+      );
+
+      const sig = await sendAndConfirmTransaction(connection, tx, [payer], {
+        commitment: "confirmed",
+      });
+
+      response.json({
+        success: true,
+        amount: 100,
+        recipient: recipient.toBase58(),
+        txSignature: sig,
+      });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        next(err);
+      } else {
+        next(new ApiError(503, "VENUE_UNAVAILABLE", err.message || "Failed to airdrop test USDC."));
+      }
+    }
+  });
+
+  app.post("/risk/publish-pulse", express.json(), async (_request, response, next) => {
+    try {
+      const { Connection, PublicKey, Keypair, Transaction, sendAndConfirmTransaction } = await import("@solana/web3.js");
+      const {
+        deriveVaultAddress,
+        deriveRiskStateAddress,
+        buildUpdateRiskStateInstruction,
+        decodeRiskState,
+      } = await import("../../risk-publisher/src/risk-state.js");
+      const fs = await import("fs");
+      const path = await import("path");
+      const os = await import("os");
+
+      const defaultRiskKeypairPath = path.resolve(
+        process.cwd(),
+        "anchor/risk_vault/target/deploy/risk_authority-keypair.json",
+      );
+      const keypairPath =
+        process.env.RISK_AUTHORITY_KEYPAIR_PATH ||
+        (fs.existsSync(defaultRiskKeypairPath)
+          ? defaultRiskKeypairPath
+          : path.join(os.homedir(), ".config/solana/id.json"));
+      if (!fs.existsSync(keypairPath)) {
+        throw new ApiError(503, "VENUE_UNAVAILABLE", "Risk authority keypair not found.");
+      }
+      const secret = JSON.parse(fs.readFileSync(keypairPath, "utf-8"));
+      const signer = Keypair.fromSecretKey(new Uint8Array(secret));
+
+      const collateralMintStr =
+        process.env.VITE_COLLATERAL_MINT ||
+        "49rjDqfTwbMZhiayCRaRWhtUyoduSWSzQTD2FdV12xxx";
+      const collateralMint = new PublicKey(collateralMintStr);
+      const [vault] = deriveVaultAddress(collateralMint);
+      const [riskStateAddr] = deriveRiskStateAddress(vault);
+
+      const rpcUrl =
+        process.env.VITE_CHAIN_RPC_URL || "https://api.devnet.solana.com";
+      const connection = new Connection(rpcUrl, "confirmed");
+
+      const currentAccount = await connection.getAccountInfo(riskStateAddr);
+      if (!currentAccount) {
+        throw new ApiError(503, "VENUE_UNAVAILABLE", "On-chain RiskState account not found.");
+      }
+      const current = decodeRiskState(currentAccount.data);
+
+      const now = Math.floor(Date.now() / 1000);
+      const nextNonce = current.nonce + 1n;
+
+      const updateIx = buildUpdateRiskStateInstruction(vault, signer.publicKey, {
+        riskLevel: current.riskLevel,
+        riskScore: current.riskScore,
+        contagionState: current.contagionState,
+        maxLeverageX100: current.maxLeverageX100,
+        observedAt: now,
+        nonce: nextNonce,
+      });
+
+      const tx = new Transaction().add(updateIx);
+      const sig = await sendAndConfirmTransaction(connection, tx, [signer], {
+        commitment: "confirmed",
+      });
+
+      response.json({
+        success: true,
+        updatedAt: now,
+        nonce: nextNonce.toString(),
+        txSignature: sig,
+      });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        next(err);
+      } else {
+        next(new ApiError(503, "VENUE_UNAVAILABLE", err.message || "Failed to publish fresh risk state."));
+      }
+    }
+  });
+
   app.use((_request, response) => {
     sendError(response, 404, "NOT_FOUND", "Route not found.");
   });

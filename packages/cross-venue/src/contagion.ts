@@ -92,31 +92,31 @@ export function calculateContagionRisk(
     {
       key: "price",
       label: "Price divergence",
-      value: ecosystem.divergence.price,
+      value: ecosystem.divergence.price?.value ?? null,
       thresholds: priceDivergenceThresholds.priceDivergence,
     },
     {
       key: "funding",
       label: "Funding divergence",
-      value: ecosystem.divergence.funding,
+      value: ecosystem.divergence.funding?.value ?? null,
       thresholds: fundingDivergenceThresholds.fundingDivergence,
     },
     {
       key: "oiConcentration",
       label: "OI concentration",
-      value: ecosystem.divergence.oiConcentration,
+      value: ecosystem.divergence.oiConcentration?.value ?? null,
       thresholds: oiConcentrationThresholds.oiConcentration,
     },
     {
       key: "liquiditySpread",
       label: "Liquidity spread divergence",
-      value: ecosystem.divergence.liquiditySpread,
+      value: ecosystem.divergence.liquiditySpread?.value ?? null,
       thresholds: liquidityDivergenceThresholds.liquidityDivergence,
     },
     {
       key: "liquidationConcentration",
       label: "Liquidation concentration",
-      value: ecosystem.divergence.liquidationConcentration,
+      value: ecosystem.divergence.liquidationConcentration?.value ?? null,
       thresholds: oiConcentrationThresholds.oiConcentration,
     },
   ].filter((signal) => isMaterialSignal(signal.value, signal.thresholds ?? []));
